@@ -1,0 +1,11 @@
+# Instale tudo com: pip install -r requirements.txt
+
+mediapipe==0.10.14        # Detecção dos 21 pontos da mão
+opencv-python==4.10.0.84  # Captura de webcam e desenho na tela
+scikit-learn==1.5.2        # SVM e KNN para classificação
+numpy==1.26.4              # Operações matemáticas
+Pillow>=10.0.0             # Exibir webcam na interface gráfica (treinar_visual.py)
+
+# Opcionais — só para o treinamento avançado com LSTM:
+# tensorflow>=2.15         # pip install tensorflow
+# matplotlib>=3.8          # pip install matplotlib  (gráficos de treino)
