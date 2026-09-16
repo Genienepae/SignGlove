@@ -23,7 +23,7 @@ Requisitos:
 
 import cv2
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import threading
 import numpy as np
 import json
@@ -51,6 +51,7 @@ from sklearn.ensemble import RandomForestClassifier
 # ── PATHS ──────────────────────────────────────────────────────────────────
 DIR_DADOS  = os.path.join(os.path.dirname(__file__), 'data', 'gestures')
 DIR_MODEL  = os.path.join(os.path.dirname(__file__), 'models')
+DIR_REFERENCIAS = os.path.join(os.path.dirname(__file__), 'assets', 'referencias')
 PATH_MODEL = os.path.join(DIR_MODEL, 'modelo_libras.pkl')
 REFERENCIA_ALFABETO_URL = (
     'https://www.gov.br/ines/pt-br/central-de-conteudos/publicacoes-1/'
@@ -59,6 +60,7 @@ REFERENCIA_ALFABETO_URL = (
 INTERVALO_UI_MS = 50  # 20 FPS: mantém controles responsivos em computadores escolares
 os.makedirs(DIR_DADOS, exist_ok=True)
 os.makedirs(DIR_MODEL, exist_ok=True)
+os.makedirs(DIR_REFERENCIAS, exist_ok=True)
 
 # ── CORES (tema escuro) ─────────────────────────────────────────────────────
 BG      = '#0d1117'
@@ -111,6 +113,7 @@ class TreinadorLibras:
         self._progresso_pendente = None
         self._resultado_pendente = None
         self._gravacao_concluida = None
+        self.caminho_pdf_referencia = self._localizar_pdf_referencia()
 
         self._carregar_dados_existentes()
         self._build_ui()
@@ -220,6 +223,14 @@ class TreinadorLibras:
         tk.Button(referencia, text='↗ ABRIR ALFABETO OFICIAL', font=('Courier', 8, 'bold'),
                   bg=GREEN2, fg=BG, relief='flat', cursor='hand2',
                   command=self._abrir_referencia_alfabeto).pack(fill='x')
+        self.lbl_pdf_referencia = tk.Label(
+            referencia, font=('Courier', 7), bg=BG, fg=MUTED,
+            justify='left', wraplength=250)
+        self.lbl_pdf_referencia.pack(anchor='w', pady=(7, 3))
+        tk.Button(referencia, text='SELECIONAR PDF BAIXADO', font=('Courier', 8, 'bold'),
+                  bg=BLUE, fg=TEXT, relief='flat', cursor='hand2',
+                  command=self._selecionar_pdf_referencia).pack(fill='x')
+        self._atualizar_pdf_referencia()
 
         self._sep(sf)
 
@@ -361,8 +372,54 @@ class TreinadorLibras:
         return btn
 
     def _abrir_referencia_alfabeto(self):
-        """Abre a publicação do INES com o alfabeto para consulta lado a lado."""
         webbrowser.open_new_tab(REFERENCIA_ALFABETO_URL)
+
+    def _localizar_pdf_referencia(self):
+        pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+        candidatos = []
+        for pasta in (DIR_REFERENCIAS, pasta_downloads):
+            if not os.path.isdir(pasta):
+                continue
+            for nome in os.listdir(pasta):
+                nome_normalizado = nome.casefold()
+                if (nome_normalizado.endswith('.pdf') and
+                        any(chave in nome_normalizado for chave in ('libras', 'alfabeto', 'sinais'))):
+                    caminho = os.path.join(pasta, nome)
+                    if os.path.isfile(caminho):
+                        candidatos.append(caminho)
+        return max(candidatos, key=os.path.getmtime) if candidatos else None
+
+    def _atualizar_pdf_referencia(self):
+        if self.caminho_pdf_referencia and os.path.isfile(self.caminho_pdf_referencia):
+            nome = os.path.basename(self.caminho_pdf_referencia)
+            self.lbl_pdf_referencia.config(text=f'PDF no teste: {nome}', fg=GREEN)
+        else:
+            self.lbl_pdf_referencia.config(
+                text='Nenhum PDF de Libras localizado. Selecione o arquivo baixado.', fg=YELLOW)
+
+    def _selecionar_pdf_referencia(self):
+        caminho = filedialog.askopenfilename(
+            title='Selecione o PDF do alfabeto em Libras',
+            initialdir=os.path.join(os.path.expanduser('~'), 'Downloads'),
+            filetypes=[('Arquivos PDF', '*.pdf')])
+        if caminho:
+            self.caminho_pdf_referencia = caminho
+            self._atualizar_pdf_referencia()
+
+    def _abrir_pdf_referencia(self):
+        if not (self.caminho_pdf_referencia and os.path.isfile(self.caminho_pdf_referencia)):
+            self.caminho_pdf_referencia = self._localizar_pdf_referencia()
+            self._atualizar_pdf_referencia()
+        if not self.caminho_pdf_referencia:
+            messagebox.showwarning(
+                'PDF de referência não encontrado',
+                'Clique em "SELECIONAR PDF BAIXADO" e escolha o PDF de Libras.\n\n'
+                'Depois disso, ele abrirá automaticamente quando você iniciar o teste.')
+            return
+        try:
+            os.startfile(self.caminho_pdf_referencia)
+        except OSError as erro:
+            messagebox.showerror('Não foi possível abrir o PDF', str(erro))
 
     def _selecionar_letra(self, letra):
         """Clique num botão do alfabeto: preenche o campo e destaca o botão."""
@@ -823,6 +880,7 @@ class TreinadorLibras:
         else:
             if self.modo in ('gravando', 'contagem'):
                 self._toggle_gravacao()
+            self._abrir_pdf_referencia()
             self.modo = 'testando'
             self._buf_teste.clear()
             self.btn_testar.config(text='■ PARAR TESTE')
