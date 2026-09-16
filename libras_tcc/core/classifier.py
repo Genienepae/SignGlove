@@ -4,13 +4,14 @@ core/classifier.py
 Classifica gestos com base nos features extraídos.
 
 Usa dois métodos:
-  1. KNN (K-Nearest Neighbors) — simples, funciona bem com poucos dados
-  2. SVM (Support Vector Machine) — mais preciso com mais dados
+  1. KNN (K-Nearest Neighbors)
+  2. SVM (Support Vector Machine)
+Compare os dois com dados de avaliação independentes para escolher.
 
 Técnicas para evitar falsos positivos:
   - Limiar de confiança mínima: só aceita predição se a confiança for alta
-  - Buffer temporal: exige que o mesmo gesto apareça por N frames seguidos
-  - Distância mínima ao vizinho mais próximo (para KNN)
+  - Buffer temporal: exige concordância em pelo menos 70% de uma janela cheia
+  - A predição atual precisa concordar com o gesto dominante da janela
 """
 
 import numpy as np
@@ -33,7 +34,7 @@ class ClassificadorGestos:
     Parâmetros:
         algoritmo: 'knn' ou 'svm'
         confianca_minima: só reconhece se a confiança for >= esse valor (0 a 1)
-        buffer_frames: quantos frames consecutivos o gesto deve aparecer para confirmar
+        buffer_frames: tamanho da janela usada para verificar a concordância temporal
     """
 
     def __init__(self, algoritmo='knn', confianca_minima=0.75, buffer_frames=8):
@@ -120,6 +121,9 @@ class ClassificadorGestos:
 
         # Verifica se a maioria do buffer concorda (suavização temporal)
         confirmado, gesto_confirmado = self._verificar_buffer()
+        # A maioria ainda pode pertencer ao gesto anterior durante uma troca.
+        # Só confirme a predição atual quando ela também for a dominante.
+        confirmado = confirmado and gesto_predito == gesto_confirmado
 
         return gesto_predito, float(confianca), confirmado
 

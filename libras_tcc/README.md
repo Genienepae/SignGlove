@@ -1,6 +1,15 @@
 # 🤟 Sistema de Reconhecimento de Libras com IA
 
-**TCC — Reconhecimento de Língua de Sinais Brasileira usando MediaPipe e Machine Learning**
+**Protótipo para TCC — reconhecimento de configurações de mão usando MediaPipe e Machine Learning**
+
+O conjunto versionado tem 950 amostras de cinco letras: A, B, C, D e F.
+Esta versão usa uma mão pela câmera; não traduz conversas em Libras. A luva é
+uma proposta futura. Consulte o [plano para o TCC e a FETEPS](../docs/PLANO_TCC_FETEPS.md)
+para o diagnóstico e a proposta de pesquisa.
+
+As métricas dos scripts atuais são exploratórias: faltam metadados para separar
+pessoas e sessões entre treino e teste. A interface visual e o treinamento LSTM
+também precisam separar os dados **antes** de gerar variações de amostras.
 
 ---
 
@@ -38,8 +47,18 @@ libras_tcc/
 ## 🚀 Como Executar (passo a passo)
 
 ### 1. Instalar dependências
+
+Use Python 3.12 com as versões fixadas neste projeto. A partir da raiz do
+repositório, crie e ative um ambiente isolado antes de executar os comandos abaixo:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+cd libras_tcc
+```
+
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 2. Coletar amostras de cada gesto
@@ -50,7 +69,7 @@ python training/coletar_dados.py --gesto A --amostras 200
 # Repita para cada gesto que quiser reconhecer
 python training/coletar_dados.py --gesto B --amostras 200
 python training/coletar_dados.py --gesto C --amostras 200
-python training/coletar_dados.py --gesto OI --amostras 200
+python training/coletar_dados.py --gesto D --amostras 200
 ```
 > **Dica:** Pressione ESPAÇO para iniciar/pausar a coleta dentro do programa.
 
@@ -58,7 +77,8 @@ python training/coletar_dados.py --gesto OI --amostras 200
 ```bash
 python training/treinar_modelo.py
 ```
-Isso vai exibir a acurácia, precisão e recall por gesto — dados importantes para o TCC.
+Isso exibe acurácia, precisão e recall por gesto. Com os dados atuais, são
+estimativas exploratórias por amostra, não uma avaliação em pessoas novas.
 
 ### 4. Executar o reconhecimento em tempo real
 ```bash
@@ -147,7 +167,9 @@ Os seguintes sinais do alfabeto de Libras são **estáticos** (sem movimento) e 
 | **C** | Mão em formato de "C" aberto |
 | **L** | Indicador e polegar formando "L" |
 | **V** | Indicador e médio levantados (sinal de paz) |
-| **OI** | Mínimo levantado + polegar levantado |
+
+Revise as referências com uma pessoa com formação em Libras antes de coletar.
+Uma configuração de dedos isolada não basta para definir qualquer sinal.
 
 ### Sinais com Movimento (mais avançados)
 
@@ -160,9 +182,9 @@ Para sinais que envolvem **movimento** (como OBRIGADO, COMO VAI VOCÊ), você pr
 ## 💡 Como Melhorar a Precisão
 
 ### Quantidade de dados
-- **Mínimo aceitável:** 100 amostras por gesto
-- **Recomendado:** 200–500 amostras por gesto
-- **Ideal:** coletar de 3 pessoas diferentes
+Não há uma quantidade universal de frames que garanta boa precisão. Priorize
+tentativas independentes de diferentes pessoas e sessões, registre a procedência
+e reserve participantes para teste. Frames consecutivos são correlacionados.
 
 ### Diversidade de dados
 Colete em condições variadas:
@@ -174,9 +196,8 @@ Colete em condições variadas:
 ### Escolha do algoritmo
 | Situação | Algoritmo recomendado |
 |----------|-----------------------|
-| Poucos dados (< 300 total) | **KNN** |
-| Muitos dados (> 300 total) | **SVM** |
-| Você quer experimentar | Teste os dois e compare |
+| Modelo de referência | Compare KNN e SVM com as mesmas divisões de avaliação |
+| Escolha final | Use resultados de validação por pessoa e custo de execução |
 
 ---
 
@@ -199,21 +220,27 @@ Sensores na Luva
     └── Lê os sensores → envia por Bluetooth
         ↓
     Aplicativo no celular ou computador
-    (usa o mesmo classificador treinado aqui)
+    (usa um novo modelo treinado com dados dos sensores)
 ```
 
 ### Por que é viável?
 
-O modelo treinado neste projeto usa **vetores de números** (ângulos, posições). Os sensores da luva também produzem números. Você pode **reaproveitar o mesmo classificador** — apenas mudando de onde vêm os dados de entrada.
+O algoritmo de classificação pode ser reutilizado como abordagem, mas o modelo
+treinado com os 73 valores de landmarks não aceita automaticamente leituras de
+sensores. A luva exige outra representação, calibração, coleta e treinamento com
+dados próprios. O repositório ainda não implementa essa integração.
 
 ### Materiais necessários
-- Flex sensors × 5 (cerca de R$ 15 cada)
-- MPU-6050 (IMU) ≈ R$ 15
-- ESP32 ≈ R$ 40
+- Flex sensors × 5
+- MPU-6050 (IMU)
+- ESP32
 - Luva de lycra para costurar os sensores
 
+Definir a arquitetura e obter cotações atuais antes de estabelecer um orçamento.
+
 ### Vantagem
-Funciona **sem câmera e sem internet** — ideal para uso cotidiano por pessoas surdas.
+O objetivo seria operar sem câmera e sem internet. A viabilidade, o conforto e a
+utilidade para o público precisam de testes com um protótipo físico.
 
 ---
 
@@ -225,9 +252,11 @@ Quando executar `treinar_modelo.py`, você receberá:
 - **Precisão** — quando diz "A", quantas vezes realmente é "A"
 - **Recall** — de todos os "A" reais, quantos foram detectados
 - **F1-Score** — média harmônica entre precisão e recall
-- **Validação cruzada (5-fold)** — resultado mais confiável que uma única divisão
+- **Validação cruzada (5-fold)** — estimativa por amostra; com dados correlacionados,
+  é necessário separar por pessoa ou sessão para medir generalização
 
-Esses números devem ir na seção de "Avaliação de Resultados" do TCC.
+Ao apresentar esses números no TCC, informe o protocolo e suas limitações. Não
+trate a avaliação atual como comprovação de funcionamento com novos usuários.
 
 ---
 
