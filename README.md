@@ -40,3 +40,10 @@ python -m unittest discover -s tests -v
 Os testes verificam a confirmação temporal de gestos, inclusive a troca entre
 classes. Eles não medem a precisão do reconhecimento por câmera nem a eficácia
 pedagógica da proposta.
+
+## Referência de Libras
+
+O treinador tem um botão para abrir o [Alfabeto de Libras e Configuração de
+Mãos do INES](https://www.gov.br/ines/pt-br/central-de-conteudos/publicacoes-1/todas-as-publicacoes/alfabeto-manual-e-configuracao-de-maos)
+em uma janela ao lado da prática. O material é publicado pelo INES sob CC BY-ND
+3.0; ele é aberto na fonte oficial, sem cópia ou alteração dentro do repositório.

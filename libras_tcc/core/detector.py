@@ -28,7 +28,8 @@ class HandDetector:
         min_tracking_confidence: limiar mínimo de confiança para rastrear entre frames
     """
 
-    def __init__(self, max_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7):
+    def __init__(self, max_hands=1, min_detection_confidence=0.7,
+                 min_tracking_confidence=0.7, model_complexity=0):
         self.mp_hands = mp.solutions.hands
         self.mp_draw = mp.solutions.drawing_utils
         self.mp_styles = mp.solutions.drawing_styles
@@ -37,6 +38,7 @@ class HandDetector:
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,          # False = modo vídeo (mais rápido)
             max_num_hands=max_hands,
+            model_complexity=model_complexity,
             min_detection_confidence=min_detection_confidence,
             min_tracking_confidence=min_tracking_confidence,
         )

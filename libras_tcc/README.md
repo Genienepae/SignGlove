@@ -80,6 +80,21 @@ python training/treinar_modelo.py
 Isso exibe acurácia, precisão e recall por gesto. Com os dados atuais, são
 estimativas exploratórias por amostra, não uma avaliação em pessoas novas.
 
+### Treinador visual
+
+```bash
+python treinar_visual.py
+```
+
+O treinador exibe a webcam em até 20 FPS para manter a janela responsiva e usa
+o modelo leve do MediaPipe. Ao clicar em **ABRIR ALFABETO OFICIAL**, abre a
+publicação de referência do INES no navegador para consulta lado a lado. Depois
+de coletar os gestos, o programa compara SVM e floresta aleatória com validação
+cruzada e usa o melhor candidato para aquele conjunto.
+
+A referência é material de consulta; valide a seleção de sinais e qualquer
+orientação de prática com uma pessoa formada em Libras.
+
 ### 4. Executar o reconhecimento em tempo real
 ```bash
 python main.py

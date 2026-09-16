@@ -30,6 +30,7 @@ import json
 import os
 import pickle
 import time
+import webbrowser
 from collections import deque, Counter
 
 # ── importa os módulos do projeto ──────────────────────────────────────────
@@ -44,13 +45,18 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
 
 # ── PATHS ──────────────────────────────────────────────────────────────────
 DIR_DADOS  = os.path.join(os.path.dirname(__file__), 'data', 'gestures')
 DIR_MODEL  = os.path.join(os.path.dirname(__file__), 'models')
 PATH_MODEL = os.path.join(DIR_MODEL, 'modelo_libras.pkl')
+REFERENCIA_ALFABETO_URL = (
+    'https://www.gov.br/ines/pt-br/central-de-conteudos/publicacoes-1/'
+    'todas-as-publicacoes/alfabeto-manual-e-configuracao-de-maos'
+)
+INTERVALO_UI_MS = 50  # 20 FPS: mantém controles responsivos em computadores escolares
 os.makedirs(DIR_DADOS, exist_ok=True)
 os.makedirs(DIR_MODEL, exist_ok=True)
 
@@ -81,6 +87,7 @@ class TreinadorLibras:
         self.root.configure(bg=BG)
         self.root.resizable(True, True)
         self.root.minsize(1100, 680)
+        self.root.geometry('1120x800+0+80')
 
         # Estado
         self.modo        = 'idle'       # idle | contagem | gravando | testando
@@ -99,10 +106,16 @@ class TreinadorLibras:
 
         # Buffer para teste
         self._buf_teste = deque(maxlen=10)
+        self._ultimo_frame = None
+        self._frame_lock = threading.Lock()
+        self._progresso_pendente = None
+        self._resultado_pendente = None
+        self._gravacao_concluida = None
 
         self._carregar_dados_existentes()
         self._build_ui()
         self._iniciar_camera()
+        self.root.after(INTERVALO_UI_MS, self._renderizar_camera)
 
         self.root.protocol('WM_DELETE_WINDOW', self._fechar)
         self.root.mainloop()
@@ -197,6 +210,17 @@ class TreinadorLibras:
         tk.Label(sf, text='IA LIBRAS', font=('Courier', 9),
                  bg=SURFACE, fg=MUTED).pack(**pad, anchor='w')
 
+        referencia = tk.Frame(sf, bg=BG, padx=10, pady=8)
+        referencia.pack(fill='x', padx=16, pady=(10, 0))
+        tk.Label(referencia, text='REFERÊNCIA VISUAL', font=('Courier', 8, 'bold'),
+                 bg=BG, fg=GREEN).pack(anchor='w')
+        tk.Label(referencia, text='Abra o alfabeto oficial do INES ao lado\n'
+                 'da câmera para praticar as configurações.',
+                 font=('Courier', 8), bg=BG, fg=TEXT, justify='left').pack(anchor='w', pady=(3, 6))
+        tk.Button(referencia, text='↗ ABRIR ALFABETO OFICIAL', font=('Courier', 8, 'bold'),
+                  bg=GREEN2, fg=BG, relief='flat', cursor='hand2',
+                  command=self._abrir_referencia_alfabeto).pack(fill='x')
+
         self._sep(sf)
 
         # ─ ATALHOS DO ALFABETO ────────────────────────────────────────────
@@ -287,7 +311,7 @@ class TreinadorLibras:
         # barra de acurácia
         acc_frame = tk.Frame(sf, bg=SURFACE)
         acc_frame.pack(fill='x', padx=16, pady=(6, 0))
-        tk.Label(acc_frame, text='Acurácia:', font=('Courier', 9),
+        tk.Label(acc_frame, text='Acurácia por amostra:', font=('Courier', 9),
                  bg=SURFACE, fg=MUTED).pack(side='left')
         self.lbl_acc = tk.Label(acc_frame, text='—', font=('Courier', 9, 'bold'),
                                 bg=SURFACE, fg=GREEN)
@@ -316,7 +340,8 @@ class TreinadorLibras:
             '• Mova a mão levemente\n'
             '• Repita de ângulos diferentes\n'
             '• Mínimo 2 gestos para treinar\n'
-            '• "Normal" já é suficiente!'
+            '• Prefira sessões diferentes\n'
+            '• Revise sinais com especialista'
         )
         tk.Label(sf, text=ajuda, font=('Courier', 8), bg=SURFACE,
                  fg=MUTED, justify='left').pack(padx=16, pady=(0, 20), anchor='w')
@@ -334,6 +359,10 @@ class TreinadorLibras:
                         padx=14, pady=10, command=cmd)
         btn.pack(fill='x', padx=16, pady=(4, 0))
         return btn
+
+    def _abrir_referencia_alfabeto(self):
+        """Abre a publicação do INES com o alfabeto para consulta lado a lado."""
+        webbrowser.open_new_tab(REFERENCIA_ALFABETO_URL)
 
     def _selecionar_letra(self, letra):
         """Clique num botão do alfabeto: preenche o campo e destaca o botão."""
@@ -412,10 +441,11 @@ class TreinadorLibras:
 
     # ── CÂMERA ───────────────────────────────────────────────────────────
     def _iniciar_camera(self):
-        self.detector = HandDetector(min_detection_confidence=0.75)
+        self.detector = HandDetector(min_detection_confidence=0.75, model_complexity=0)
         self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  800)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         self.rodando = True
         self._thread_cam = threading.Thread(target=self._loop_camera, daemon=True)
         self._thread_cam.start()
@@ -503,7 +533,7 @@ class TreinadorLibras:
                         if feat is not None:
                             novas_amostras.append(feat)
 
-                        self.root.after(0, self._set_progresso, pct)
+                        self._progresso_pendente = pct
 
                         if len(novas_amostras) >= total_meta:
                             coletando = False
@@ -541,7 +571,7 @@ class TreinadorLibras:
                         if validos:
                             mais, cnt = Counter(validos).most_common(1)[0]
                             if cnt / len(self._buf_teste) >= 0.6:
-                                self.root.after(0, self._mostrar_resultado, mais, conf)
+                                self._resultado_pendente = (mais, conf)
 
                         if conf >= 0.70:
                             cv2.putText(frame_ann, pred, (12, h - 50),
@@ -559,12 +589,40 @@ class TreinadorLibras:
                 cv2.putText(frame_ann, msg, (12, 26),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (125, 133, 144), 1)
 
-            # exibe no tk
+            # A thread de câmera nunca atualiza o Tk diretamente. Mantemos somente
+            # o quadro mais recente; o loop da interface renderiza no máximo 20 FPS.
             frame_rgb = cv2.cvtColor(frame_ann, cv2.COLOR_BGR2RGB)
-            img = self._frame_para_tk(frame_rgb)
-            self.root.after(0, self._update_cam, img)
+            with self._frame_lock:
+                self._ultimo_frame = frame_rgb
 
-            time.sleep(0.01)
+            time.sleep(0.005)
+
+    def _renderizar_camera(self):
+        """Renderiza o último quadro no thread principal sem criar fila de atrasos."""
+        if not self.rodando:
+            return
+
+        with self._frame_lock:
+            frame_rgb = self._ultimo_frame
+            self._ultimo_frame = None
+
+        if frame_rgb is not None:
+            self._update_cam(self._frame_para_tk(frame_rgb))
+
+        if self._progresso_pendente is not None:
+            self._set_progresso(self._progresso_pendente)
+            self._progresso_pendente = None
+
+        if self._resultado_pendente is not None:
+            self._mostrar_resultado(*self._resultado_pendente)
+            self._resultado_pendente = None
+
+        if self._gravacao_concluida is not None:
+            nome, quantidade = self._gravacao_concluida
+            self._gravacao_concluida = None
+            self._pos_gravacao(nome, quantidade)
+
+        self.root.after(INTERVALO_UI_MS, self._renderizar_camera)
 
     def _frame_para_tk(self, frame_rgb):
         from PIL import Image, ImageTk
@@ -636,9 +694,9 @@ class TreinadorLibras:
             # A thread de câmera detecta contagem_restante==0 e muda para 'gravando'
 
     def _finalizar_gravacao(self, nome, amostras):
-        """Salva as amostras e atualiza a UI (pode ser chamado da thread)."""
+        """Salva as amostras; o loop do Tk fará a atualização visual."""
         self._salvar_gesto(nome, amostras)
-        self.root.after(0, self._pos_gravacao, nome, len(amostras))
+        self._gravacao_concluida = (nome, len(amostras))
 
     def _pos_gravacao(self, nome, n):
         self.modo = 'idle'
@@ -676,61 +734,80 @@ class TreinadorLibras:
             X = np.array(X, dtype=np.float32)
             y = np.array(y)
 
-            # ── Aumentação simples (espelhar + ruído) ──
-            X_aug, y_aug = [X.copy()], [y.copy()]
-            for _ in range(2):
-                Xn = X.copy()
-                Xn[:, :63] += np.random.normal(0, 0.015, Xn[:, :63].shape).astype(np.float32)
-                pts = Xn[:, :63].reshape(-1, 21, 3)
-                pts[:, :, 0] = -pts[:, :, 0]
-                Xn[:, :63] = pts.reshape(-1, 63)
-                X_aug.append(Xn)
-                y_aug.append(y.copy())
-
-            X_all = np.vstack(X_aug)
-            y_all = np.concatenate(y_aug)
-
             le = LabelEncoder()
-            y_enc = le.fit_transform(y_all)
+            y_enc = le.fit_transform(y)
+            menor_classe = min(np.bincount(y_enc))
+            if menor_classe < 2:
+                raise ValueError('Cada gesto precisa de pelo menos 2 amostras.')
 
-            modelo = Pipeline([
+            # Avaliamos candidatos nos dados originais. Variações artificiais só
+            # entram após a avaliação, para não repetir a mesma tentativa no treino
+            # e na validação.
+            cv = StratifiedKFold(
+                n_splits=min(5, menor_classe), shuffle=True, random_state=42
+            )
+            candidatos = {
+                'SVM': Pipeline([
                 ('sc', StandardScaler()),
                 ('svm', SVC(kernel='rbf', C=10, gamma='scale',
                              probability=True, random_state=42))
-            ])
+                ]),
+                'Floresta aleatória': RandomForestClassifier(
+                    n_estimators=250, min_samples_leaf=2, class_weight='balanced',
+                    random_state=42, n_jobs=1
+                ),
+            }
+            medias = {
+                nome: cross_val_score(modelo, X, y_enc, cv=cv, scoring='accuracy').mean()
+                for nome, modelo in candidatos.items()
+            }
+            nome_modelo = max(medias, key=medias.get)
+            modelo = candidatos[nome_modelo]
+            acc = medias[nome_modelo]
 
-            scores = cross_val_score(modelo, X_all, y_enc, cv=3, scoring='accuracy')
-            acc = scores.mean()
+            # Ruído leve ajuda a tolerar pequenas oscilações naturais da webcam.
+            # Não espelhamos a mão, pois isso pode alterar uma configuração válida.
+            ruido = np.random.default_rng(42).normal(0, 0.004, X.shape).astype(np.float32)
+            X_treino = np.vstack((X, X + ruido))
+            y_treino = np.concatenate((y_enc, y_enc))
 
-            modelo.fit(X_all, y_enc)
+            modelo.fit(X_treino, y_treino)
 
             os.makedirs(DIR_MODEL, exist_ok=True)
             with open(PATH_MODEL, 'wb') as f:
-                pickle.dump({'modelo': modelo, 'le': le}, f)
+                pickle.dump({
+                    'modelo': modelo,
+                    'le': le,
+                    'nome_modelo': nome_modelo,
+                    'acuracias_cv': medias,
+                }, f)
 
             self.modelo   = modelo
             self.le       = le
             self.treinado = True
 
-            self.root.after(0, self._pos_treino, acc, len(le.classes_))
+            self.root.after(0, self._pos_treino, acc, len(le.classes_), nome_modelo)
 
         except Exception as e:
             self.root.after(0, messagebox.showerror, 'Erro no treino', str(e))
             self.root.after(0, self.btn_treinar.config,
                             {'text': '🧠 TREINAR IA', 'state': 'normal'})
 
-    def _pos_treino(self, acc, n_classes):
+    def _pos_treino(self, acc, n_classes, nome_modelo):
         self.btn_treinar.config(text='🧠 TREINAR IA', state='normal')
         self.lbl_acc.config(text=f'{acc*100:.1f}%',
                              fg=GREEN if acc >= 0.85 else YELLOW if acc >= 0.70 else RED)
         self.status_bar.config(
-            text=f'✓  Treinamento concluído!  {n_classes} gestos · Acurácia: {acc*100:.1f}%',
+            text=f'✓  {nome_modelo} selecionada!  {n_classes} gestos · Acurácia: {acc*100:.1f}%',
             fg=GREEN)
         messagebox.showinfo('Treinamento concluído!',
             f'✅ A IA foi treinada com sucesso!\n\n'
+            f'   IA selecionada: {nome_modelo}\n'
             f'   Gestos: {list(self.le.classes_)}\n'
-            f'   Acurácia estimada: {acc*100:.1f}%\n\n'
-            f'Clique em "▶ TESTAR" para ver funcionando.')
+            f'   Acurácia por amostra: {acc*100:.1f}%\n\n'
+            'Essa estimativa não mede pessoas novas.\n'
+            'Clique em "▶ TESTAR" para ver funcionando.'
+        )
 
     # ── TESTE ─────────────────────────────────────────────────────────────
     def _toggle_teste(self):
