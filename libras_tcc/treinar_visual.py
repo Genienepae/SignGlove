@@ -24,14 +24,13 @@ Requisitos:
 import cv2
 import argparse
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox
 import threading
 import numpy as np
 import json
 import os
 import pickle
 import time
-import webbrowser
 import random
 from datetime import datetime, timezone
 from collections import deque, Counter
@@ -63,10 +62,7 @@ PATH_MANIFESTO_PRATICAS = os.path.join(os.path.dirname(__file__), 'data', 'metad
 DIR_MODEL  = os.path.join(os.path.dirname(__file__), 'models')
 DIR_REFERENCIAS = os.path.join(os.path.dirname(__file__), 'assets', 'referencias')
 PATH_MODEL = os.path.join(DIR_MODEL, 'modelo_libras.pkl')
-REFERENCIA_ALFABETO_URL = (
-    'https://www.gov.br/ines/pt-br/central-de-conteudos/publicacoes-1/'
-    'todas-as-publicacoes/alfabeto-manual-e-configuracao-de-maos'
-)
+PATH_IMAGEM_ALFABETO = os.path.join(DIR_REFERENCIAS, 'alfabeto_libras_ines.png')
 INTERVALO_UI_MS = 50  # 20 FPS: mantém controles responsivos em computadores escolares
 # O detector é a parte mais pesada do treinador. A captura continua lendo
 # frames para evitar atraso, mas o MediaPipe é executado no máximo 20 vezes/s.
@@ -137,7 +133,7 @@ class TreinadorLibras:
         self._resultado_pendente = None
         self._gravacao_concluida = None
         self.inicio_coleta_atual = None
-        self.caminho_pdf_referencia = self._localizar_pdf_referencia()
+        self._imagem_alfabeto_tk = None
 
         self._carregar_dados_existentes()
         self._build_ui()
@@ -189,7 +185,8 @@ class TreinadorLibras:
     # ── UI ───────────────────────────────────────────────────────────────
     def _build_ui(self):
         self.root.grid_columnconfigure(0, weight=3)
-        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(1, weight=0)
+        self.root.grid_columnconfigure(2, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
 
         # ── PAINEL ESQUERDO — webcam ──────────────────────────────────────
@@ -215,9 +212,22 @@ class TreinadorLibras:
         self.prog_bar.pack(fill='x')
         self.prog_fill = self.prog_bar.create_rectangle(0, 0, 0, 10, fill=GREEN, outline='')
 
+        # ── PAINEL CENTRAL — referência dentro da mesma janela ────────────
+        self.painel_referencia = tk.Frame(self.root, bg=BG, width=285)
+        self.painel_referencia.grid(row=0, column=1, sticky='nsew')
+        self.painel_referencia.grid_propagate(False)
+        tk.Label(self.painel_referencia, text='ALFABETO EM LIBRAS',
+                 font=('Courier', 9, 'bold'), bg=BG, fg=GREEN).pack(pady=(12, 4))
+        tk.Label(self.painel_referencia, text='Referência oficial do INES',
+                 font=('Courier', 7), bg=BG, fg=MUTED).pack(pady=(0, 8))
+        self.lbl_imagem_alfabeto = tk.Label(self.painel_referencia, bg=BG)
+        self.lbl_imagem_alfabeto.pack(fill='both', expand=True, padx=8, pady=(0, 12))
+        self._carregar_imagem_alfabeto()
+        self.painel_referencia.grid_remove()
+
         # ── PAINEL DIREITO — controles ────────────────────────────────────
         right = tk.Frame(self.root, bg=SURFACE, width=340)
-        right.grid(row=0, column=1, sticky='nsew')
+        right.grid(row=0, column=2, sticky='nsew')
         right.grid_propagate(False)
         right.grid_columnconfigure(0, weight=1)
 
@@ -240,25 +250,6 @@ class TreinadorLibras:
                  bg=SURFACE, fg=GREEN).pack(pady=(16, 2), **pad, anchor='w')
         tk.Label(sf, text='IA LIBRAS', font=('Courier', 9),
                  bg=SURFACE, fg=MUTED).pack(**pad, anchor='w')
-
-        referencia = tk.Frame(sf, bg=BG, padx=10, pady=8)
-        referencia.pack(fill='x', padx=16, pady=(10, 0))
-        tk.Label(referencia, text='REFERÊNCIA VISUAL', font=('Courier', 8, 'bold'),
-                 bg=BG, fg=GREEN).pack(anchor='w')
-        tk.Label(referencia, text='Abra o alfabeto oficial do INES ao lado\n'
-                 'da câmera para praticar as configurações.',
-                 font=('Courier', 8), bg=BG, fg=TEXT, justify='left').pack(anchor='w', pady=(3, 6))
-        tk.Button(referencia, text='↗ ABRIR ALFABETO OFICIAL', font=('Courier', 8, 'bold'),
-                  bg=GREEN2, fg=BG, relief='flat', cursor='hand2',
-                  command=self._abrir_referencia_alfabeto).pack(fill='x')
-        self.lbl_pdf_referencia = tk.Label(
-            referencia, font=('Courier', 7), bg=BG, fg=MUTED,
-            justify='left', wraplength=250)
-        self.lbl_pdf_referencia.pack(anchor='w', pady=(7, 3))
-        tk.Button(referencia, text='SELECIONAR PDF BAIXADO', font=('Courier', 8, 'bold'),
-                  bg=BLUE, fg=TEXT, relief='flat', cursor='hand2',
-                  command=self._selecionar_pdf_referencia).pack(fill='x')
-        self._atualizar_pdf_referencia()
 
         self._sep(sf)
 
@@ -429,55 +420,26 @@ class TreinadorLibras:
         btn.pack(fill='x', padx=16, pady=(4, 0))
         return btn
 
-    def _abrir_referencia_alfabeto(self):
-        webbrowser.open_new_tab(REFERENCIA_ALFABETO_URL)
-
-    def _localizar_pdf_referencia(self):
-        pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
-        candidatos = []
-        for pasta in (DIR_REFERENCIAS, pasta_downloads):
-            if not os.path.isdir(pasta):
-                continue
-            for nome in os.listdir(pasta):
-                nome_normalizado = nome.casefold()
-                if (nome_normalizado.endswith('.pdf') and
-                        any(chave in nome_normalizado for chave in ('libras', 'alfabeto', 'sinais'))):
-                    caminho = os.path.join(pasta, nome)
-                    if os.path.isfile(caminho):
-                        candidatos.append(caminho)
-        return max(candidatos, key=os.path.getmtime) if candidatos else None
-
-    def _atualizar_pdf_referencia(self):
-        if self.caminho_pdf_referencia and os.path.isfile(self.caminho_pdf_referencia):
-            nome = os.path.basename(self.caminho_pdf_referencia)
-            self.lbl_pdf_referencia.config(text=f'PDF no teste: {nome}', fg=GREEN)
-        else:
-            self.lbl_pdf_referencia.config(
-                text='Nenhum PDF de Libras localizado. Selecione o arquivo baixado.', fg=YELLOW)
-
-    def _selecionar_pdf_referencia(self):
-        caminho = filedialog.askopenfilename(
-            title='Selecione o PDF do alfabeto em Libras',
-            initialdir=os.path.join(os.path.expanduser('~'), 'Downloads'),
-            filetypes=[('Arquivos PDF', '*.pdf')])
-        if caminho:
-            self.caminho_pdf_referencia = caminho
-            self._atualizar_pdf_referencia()
-
-    def _abrir_pdf_referencia(self):
-        if not (self.caminho_pdf_referencia and os.path.isfile(self.caminho_pdf_referencia)):
-            self.caminho_pdf_referencia = self._localizar_pdf_referencia()
-            self._atualizar_pdf_referencia()
-        if not self.caminho_pdf_referencia:
-            messagebox.showwarning(
-                'PDF de referência não encontrado',
-                'Clique em "SELECIONAR PDF BAIXADO" e escolha o PDF de Libras.\n\n'
-                'Depois disso, ele abrirá automaticamente quando você iniciar o teste.')
+    def _carregar_imagem_alfabeto(self):
+        """Carrega a referência uma vez; ela não depende de navegador ou PDF."""
+        from PIL import Image, ImageTk
+        if not os.path.isfile(PATH_IMAGEM_ALFABETO):
+            self.lbl_imagem_alfabeto.config(
+                text='Imagem do alfabeto não encontrada.', fg=YELLOW,
+                font=('Courier', 8), justify='center')
             return
-        try:
-            os.startfile(self.caminho_pdf_referencia)
-        except OSError as erro:
-            messagebox.showerror('Não foi possível abrir o PDF', str(erro))
+        with Image.open(PATH_IMAGEM_ALFABETO) as imagem:
+            imagem = imagem.convert('RGB')
+            imagem.thumbnail((265, 690), Image.LANCZOS)
+            self._imagem_alfabeto_tk = ImageTk.PhotoImage(imagem.copy())
+        self.lbl_imagem_alfabeto.config(image=self._imagem_alfabeto_tk)
+
+    def _mostrar_referencia_teste(self):
+        """Exibe o alfabeto ao lado da câmera somente durante teste/desafio."""
+        self.painel_referencia.grid()
+
+    def _ocultar_referencia_teste(self):
+        self.painel_referencia.grid_remove()
 
     def _selecionar_letra(self, letra):
         """Clique num botão do alfabeto: preenche o campo e destaca o botão."""
@@ -560,7 +522,12 @@ class TreinadorLibras:
         # Mantém o uso de CPU previsível em computadores escolares.
         cv2.setNumThreads(1)
         from core.detector import HandDetector
-        self.detector = HandDetector(min_detection_confidence=0.75, model_complexity=0)
+        self.detector = HandDetector(
+            max_hands=2,
+            min_detection_confidence=0.6,
+            min_tracking_confidence=0.6,
+            model_complexity=1,
+        )
         self.cap = cv2.VideoCapture(self.camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
@@ -593,8 +560,11 @@ class TreinadorLibras:
             frame = cv2.flip(frame, 1)
             agora = time.monotonic()
             if agora < proxima_deteccao:
-                # Exibe o frame atual sem repetir a inferência pesada.
-                landmarks, frame_ann, detectou = None, frame, False
+                # Exibe os últimos traços no frame atual. Assim os landmarks
+                # não piscam entre inferências, que continuam limitadas a 20 FPS.
+                landmarks, frame_ann, detectou = None, frame.copy(), False
+                if self.detector.ultimas_maos:
+                    self.detector.desenhar_maos(frame_ann, self.detector.ultimas_maos)
             else:
                 proxima_deteccao = agora + INTERVALO_DETECCAO_S
                 landmarks, frame_ann, detectou = self.detector.detect(frame)
@@ -994,6 +964,7 @@ class TreinadorLibras:
         self.lbl_desafio.config(text='Desafio: —', fg=MUTED)
         self.lbl_resultado.config(text='—')
         self.lbl_confianca.config(text='')
+        self._ocultar_referencia_teste()
         self.status_bar.config(text=resumo_desafio or 'PRONTO',
                                fg=GREEN if resumo_desafio else MUTED)
 
@@ -1027,7 +998,7 @@ class TreinadorLibras:
         except ValueError as erro:
             messagebox.showwarning('Código do participante', str(erro))
             return
-        self._abrir_pdf_referencia()
+        self._mostrar_referencia_teste()
         self.modo = 'testando'
         self.modo_desafio = True
         self.desafios_acertos = 0
@@ -1047,7 +1018,7 @@ class TreinadorLibras:
         else:
             if self.modo in ('gravando', 'contagem'):
                 self._toggle_gravacao()
-            self._abrir_pdf_referencia()
+            self._mostrar_referencia_teste()
             self.modo = 'testando'
             self.modo_desafio = False
             self._buf_teste.clear()

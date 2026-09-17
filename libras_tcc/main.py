@@ -131,10 +131,10 @@ def main(camera_index=0, check_only=False):
     # MediaPipe só é necessário quando a câmera realmente será aberta.
     from core.detector import HandDetector
     detector = HandDetector(
-        max_hands=1,
-        min_detection_confidence=0.8,
-        min_tracking_confidence=0.7,
-        model_complexity=0,
+        max_hands=2,
+        min_detection_confidence=0.6,
+        min_tracking_confidence=0.6,
+        model_complexity=1,
     )
 
     cap = cv2.VideoCapture(camera_index)

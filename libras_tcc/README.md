@@ -177,14 +177,20 @@ python training/verificar_cobertura.py
 
 ### Modo desafio
 
-Depois de treinar a IA, clique em **INICIAR DESAFIO**. O sistema abre o PDF de
-referência, sorteia uma das letras treinadas e contabiliza o acerto apenas após a
-confirmação temporal da câmera. Também informa erros estáveis, sem repetir o mesmo
-erro continuamente. A pontuação serve para acompanhar a prática na
+Depois de treinar a IA, clique em **INICIAR DESAFIO**. O alfabeto oficial do INES
+aparece dentro da mesma janela, ao lado da câmera; não abre navegador nem PDF
+externo. O sistema sorteia uma das letras treinadas e contabiliza o acerto apenas
+após a confirmação temporal da câmera. Também informa erros estáveis, sem repetir o
+mesmo erro continuamente. A pontuação serve para acompanhar a prática na
 sessão; não é uma avaliação linguística nem uma medida de aprendizagem validada.
 Ao encerrar o desafio, o sistema salva em `data/metadata/praticas.jsonl` somente
 o código anônimo do participante, início, duração, acertos e erros. Não salva imagens,
 vídeos ou nomes.
+
+O detector desenha até duas mãos e mantém os traços entre as leituras para reduzir
+o efeito de piscar. O modelo atual ainda classifica somente a mão principal, pois
+foi treinado com 73 características de uma mão. Sinais que exigem duas mãos ou
+movimento precisam de uma coleta e treinamento específicos.
 
 Para resumir as sessões já registradas, sem abrir a câmera:
 
