@@ -101,7 +101,8 @@ Para usar a câmera do celular quando ela aparecer como outro dispositivo:
 python treinar_visual.py --camera 1
 ```
 
-O treinador exibe a webcam em até 20 FPS para manter a janela responsiva e usa
+O treinador exibe a webcam em até 20 FPS para manter a janela responsiva e limita
+o processamento pesado do detector a essa mesma taxa. Ele usa
 o modelo leve do MediaPipe. Ao clicar em **ABRIR ALFABETO OFICIAL**, abre a
 publicação de referência do INES no navegador para consulta lado a lado. Depois
 de coletar os gestos, o programa compara SVM e floresta aleatória com validação

@@ -69,6 +69,9 @@ REFERENCIA_ALFABETO_URL = (
     'todas-as-publicacoes/alfabeto-manual-e-configuracao-de-maos'
 )
 INTERVALO_UI_MS = 50  # 20 FPS: mantém controles responsivos em computadores escolares
+# O detector é a parte mais pesada do treinador. A captura continua lendo
+# frames para evitar atraso, mas o MediaPipe é executado no máximo 20 vezes/s.
+INTERVALO_DETECCAO_S = 0.05
 os.makedirs(DIR_DADOS, exist_ok=True)
 os.makedirs(DIR_MODEL, exist_ok=True)
 os.makedirs(DIR_REFERENCIAS, exist_ok=True)
@@ -575,6 +578,7 @@ class TreinadorLibras:
         novas_amostras  = []
         coletando       = False
         t_inicio        = 0
+        proxima_deteccao = 0.0
 
         while self.rodando:
             ret, frame = self.cap.read()
@@ -583,7 +587,13 @@ class TreinadorLibras:
                 continue
 
             frame = cv2.flip(frame, 1)
-            landmarks, frame_ann, detectou = self.detector.detect(frame)
+            agora = time.monotonic()
+            if agora < proxima_deteccao:
+                # Exibe o frame atual sem repetir a inferência pesada.
+                landmarks, frame_ann, detectou = None, frame, False
+            else:
+                proxima_deteccao = agora + INTERVALO_DETECCAO_S
+                landmarks, frame_ann, detectou = self.detector.detect(frame)
             h, w = frame_ann.shape[:2]
 
             # ── MODO CONTAGEM REGRESSIVA ──────────────────────────────────
