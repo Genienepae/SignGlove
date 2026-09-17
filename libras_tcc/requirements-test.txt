@@ -1,0 +1,3 @@
+# Dependências mínimas para a suíte automatizada (sem webcam/MediaPipe).
+numpy==1.26.4
+scikit-learn==1.5.2

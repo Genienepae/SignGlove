@@ -44,6 +44,9 @@ Com NumPy e scikit-learn instalados, execute na raiz do repositório:
 python -m unittest discover -s tests -v
 ```
 
+O CI usa as mesmas versões mínimas definidas em
+`libras_tcc/requirements-test.txt` e não precisa acessar a câmera.
+
 Os testes verificam a confirmação temporal de gestos, inclusive a troca entre
 classes. Eles não medem a precisão do reconhecimento por câmera nem a eficácia
 pedagógica da proposta.
