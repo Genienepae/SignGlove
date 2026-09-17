@@ -113,6 +113,13 @@ python training/avaliar_por_participante.py
 O comando mede acurácia e F1 macro reservando pessoas inteiras para teste. Para
 um resultado mais estável, colete os mesmos gestos com pelo menos três pessoas.
 
+### Modo desafio
+
+Depois de treinar a IA, clique em **INICIAR DESAFIO**. O sistema abre o PDF de
+referência, sorteia uma das letras treinadas e contabiliza o acerto apenas após a
+confirmação temporal da câmera. A pontuação serve para acompanhar a prática na
+sessão; não é uma avaliação linguística nem uma medida de aprendizagem validada.
+
 ### 4. Executar o reconhecimento em tempo real
 ```bash
 python main.py

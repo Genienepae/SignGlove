@@ -31,6 +31,7 @@ import os
 import pickle
 import time
 import webbrowser
+import random
 from datetime import datetime, timezone
 from collections import deque, Counter
 
@@ -111,6 +112,9 @@ class TreinadorLibras:
 
         # Buffer para teste
         self._buf_teste = deque(maxlen=10)
+        self.modo_desafio = False
+        self.desafio_atual = None
+        self.desafios_acertos = 0
         self._ultimo_frame = None
         self._frame_lock = threading.Lock()
         self._progresso_pendente = None
@@ -353,6 +357,11 @@ class TreinadorLibras:
         # ─ TESTAR ────────────────────────────────────────────────────────
         self.btn_testar = self._botao(sf, '▶ TESTAR EM TEMPO REAL', ORANGE, BG,
                                       self._toggle_teste, size=12)
+        self.btn_desafio = self._botao(sf, '🎯 INICIAR DESAFIO', GREEN2, BG,
+                                       self._toggle_desafio, size=11)
+        self.lbl_desafio = tk.Label(sf, text='Desafio: —', font=('Courier', 9, 'bold'),
+                                    bg=SURFACE, fg=MUTED)
+        self.lbl_desafio.pack(pady=(7, 0))
 
         # resultado do teste
         self.lbl_resultado = tk.Label(sf, text='—', font=('Courier', 22, 'bold'),
@@ -895,23 +904,64 @@ class TreinadorLibras:
         )
 
     # ── TESTE ─────────────────────────────────────────────────────────────
+    def _parar_teste(self):
+        self.modo = 'idle'
+        self.modo_desafio = False
+        self.desafio_atual = None
+        self.btn_testar.config(text='▶ TESTAR EM TEMPO REAL')
+        self.btn_desafio.config(text='🎯 INICIAR DESAFIO')
+        self.lbl_desafio.config(text='Desafio: —', fg=MUTED)
+        self.lbl_resultado.config(text='—')
+        self.lbl_confianca.config(text='')
+        self.status_bar.config(text='PRONTO', fg=MUTED)
+
+    def _sortear_desafio(self):
+        opcoes = list(self.le.classes_)
+        if len(opcoes) > 1 and self.desafio_atual in opcoes:
+            opcoes.remove(self.desafio_atual)
+        self.desafio_atual = random.choice(opcoes)
+        self._buf_teste.clear()
+        self.lbl_desafio.config(
+            text=f'DESAFIO: faça a letra {self.desafio_atual}  |  Acertos: {self.desafios_acertos}',
+            fg=GREEN)
+        self.status_bar.config(
+            text=f'DESAFIO ATIVO — faça a letra {self.desafio_atual}', fg=GREEN)
+
+    def _toggle_desafio(self):
+        if not self.treinado:
+            messagebox.showwarning('Atenção', 'Treine a IA antes de iniciar um desafio.')
+            return
+        if self.modo_desafio:
+            self._parar_teste()
+            return
+        if self.modo in ('gravando', 'contagem'):
+            self._toggle_gravacao()
+        if self.modo == 'testando':
+            self._parar_teste()
+        self._abrir_pdf_referencia()
+        self.modo = 'testando'
+        self.modo_desafio = True
+        self.desafios_acertos = 0
+        self.btn_testar.config(text='■ PARAR TESTE')
+        self.btn_desafio.config(text='■ PARAR DESAFIO')
+        self._sortear_desafio()
+
     def _toggle_teste(self):
         if not self.treinado:
             messagebox.showwarning('Atenção', 'Treine a IA antes de testar.')
             return
         if self.modo == 'testando':
-            self.modo = 'idle'
-            self.btn_testar.config(text='▶ TESTAR EM TEMPO REAL')
-            self.lbl_resultado.config(text='—')
-            self.lbl_confianca.config(text='')
-            self.status_bar.config(text='PRONTO', fg=MUTED)
+            self._parar_teste()
         else:
             if self.modo in ('gravando', 'contagem'):
                 self._toggle_gravacao()
             self._abrir_pdf_referencia()
             self.modo = 'testando'
+            self.modo_desafio = False
             self._buf_teste.clear()
             self.btn_testar.config(text='■ PARAR TESTE')
+            self.btn_desafio.config(text='🎯 INICIAR DESAFIO')
+            self.lbl_desafio.config(text='Desafio: —', fg=MUTED)
             self.status_bar.config(text='TESTANDO EM TEMPO REAL — faça um sinal para a câmera', fg=ORANGE)
 
     def _mostrar_resultado(self, gesto, conf):
@@ -919,6 +969,9 @@ class TreinadorLibras:
         cor = GREEN if conf >= 0.85 else YELLOW if conf >= 0.70 else RED
         self.lbl_resultado.config(fg=cor)
         self.lbl_confianca.config(text=f'Confiança: {conf*100:.0f}%', fg=MUTED)
+        if self.modo_desafio and gesto == self.desafio_atual:
+            self.desafios_acertos += 1
+            self._sortear_desafio()
 
     # ── ENCERRAR ──────────────────────────────────────────────────────────
     def _fechar(self):
