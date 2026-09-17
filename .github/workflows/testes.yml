@@ -26,3 +26,6 @@ jobs:
 
       - name: Verificar sintaxe Python
         run: python -m compileall -q libras_tcc tests
+
+      - name: Validar dataset
+        run: python libras_tcc/training/diagnosticar_projeto.py --strict
