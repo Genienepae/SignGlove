@@ -26,7 +26,8 @@ from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 
 def salvar_resumo_treino(
-    caminho, acuracia, f1_macro, criterio_metrica, classes, amostras, por_gesto
+    caminho, acuracia, f1_macro, criterio_metrica, classes, amostras, por_gesto,
+    matriz_confusao
 ):
     """Salva as métricas principais do treinamento em JSON."""
     destino = os.path.abspath(caminho)
@@ -39,6 +40,7 @@ def salvar_resumo_treino(
             'gestos': sorted(set(classes)),
             'amostras': int(amostras),
             'por_gesto': por_gesto,
+            'matriz_confusao': matriz_confusao,
         }, arquivo, ensure_ascii=False, indent=2)
         arquivo.write('\n')
 
@@ -109,6 +111,7 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
             'f1_macro': resultado['f1_macro'],
             'criterio_metrica': 'por participante',
             'por_gesto': resultado['por_gesto'],
+            'matriz_confusao': resultado['matriz_confusao'],
         }
     except ValueError as erro:
         motivos_esperados = (
@@ -137,6 +140,8 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
     # Converte de volta para nomes
     y_pred = le.inverse_transform(y_pred_enc)
     y_test_nomes = np.array(y_test)
+    rotulos = sorted(set(y_test_nomes))
+    matriz = confusion_matrix(y_test_nomes, y_pred, labels=rotulos).tolist()
 
     # Relatório de classificação (precisão, recall, F1 por classe)
     print("\n[INFO] Relatório por gesto:")
@@ -170,8 +175,9 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
                 'f1': float(relatorio[gesto]['f1-score']),
                 'amostras': int(relatorio[gesto]['support']),
             }
-            for gesto in sorted(set(y_test_nomes))
+            for gesto in rotulos
         },
+        'matriz_confusao': {'rotulos': rotulos, 'valores': matriz},
     }
 
 
@@ -211,7 +217,8 @@ def main():
     if args.saida:
         salvar_resumo_treino(
             args.saida, metricas['acuracia'], metricas['f1_macro'],
-            metricas['criterio_metrica'], y, len(X), metricas['por_gesto'])
+            metricas['criterio_metrica'], y, len(X), metricas['por_gesto'],
+            metricas['matriz_confusao'])
         print(f"[OK] Resumo salvo em: {os.path.abspath(args.saida)}")
     print(f"   Para usar: python main.py")
 
