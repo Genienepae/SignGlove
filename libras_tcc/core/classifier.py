@@ -182,6 +182,10 @@ class ClassificadorGestos:
         with open(caminho, 'rb') as f:
             dados = pickle.load(f)
 
+        dimensao_declarada = dados.get('features_esperadas')
+        if dimensao_declarada is not None and dimensao_declarada != 73:
+            raise ValueError(
+                f'Modelo espera {dimensao_declarada} features; o projeto usa 73.')
         self.modelo = dados['modelo']
         # O treinador visual histórico usa "le"; o classificador usa
         # "label_encoder". Aceitamos ambos para que as duas interfaces abram

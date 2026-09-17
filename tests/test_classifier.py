@@ -132,6 +132,16 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
         self.assertEqual(salvo['formato_modelo'], 2)
         self.assertIsNone(salvo['features_esperadas'])
 
+    def test_carregar_rejeita_dimensao_declarada_incompativel(self):
+        original = self.criar_classificador(['A'])
+        with tempfile.TemporaryDirectory() as pasta:
+            caminho = Path(pasta) / 'modelo.pkl'
+            with caminho.open('wb') as arquivo:
+                pickle.dump({'modelo': ModeloFixo(), 'le': original.label_encoder,
+                             'features_esperadas': 72}, arquivo)
+            with self.assertRaisesRegex(ValueError, '72 features'):
+                ClassificadorGestos().carregar(str(caminho))
+
 
 if __name__ == '__main__':
     unittest.main()
