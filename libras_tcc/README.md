@@ -159,6 +159,10 @@ python main.py
 
 ---
 
+O reconhecimento principal usa câmera em 640×480 e o modelo leve do MediaPipe
+para diminuir atraso em computadores escolares. Se a câmera externa estiver sendo
+usada por outro programa, feche esse programa antes de abrir o reconhecimento.
+
 ## 🧠 Como Funciona — Explicado para o TCC
 
 ### Os 21 Landmarks do MediaPipe

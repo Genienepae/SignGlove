@@ -29,6 +29,8 @@ CAMINHO_MODELO = os.path.join(os.path.dirname(__file__), 'models', 'modelo_libra
 CONFIANCA_MINIMA = 0.75       # só mostra predição com >= 75% de confiança
 BUFFER_FRAMES = 8             # frames necessários para confirmar um gesto
 COOLDOWN_SEGUNDOS = 1.5       # tempo mínimo entre duas confirmações
+LARGURA_CAMERA = 640
+ALTURA_CAMERA = 480
 
 # Cores (BGR)
 VERDE    = (0, 220, 100)
@@ -103,7 +105,8 @@ def main():
     detector = HandDetector(
         max_hands=1,
         min_detection_confidence=0.8,
-        min_tracking_confidence=0.7
+        min_tracking_confidence=0.7,
+        model_complexity=0,
     )
     classificador = ClassificadorGestos(
         confianca_minima=CONFIANCA_MINIMA,
@@ -112,8 +115,9 @@ def main():
     classificador.carregar(CAMINHO_MODELO)
 
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, LARGURA_CAMERA)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, ALTURA_CAMERA)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     if not cap.isOpened():
         print("❌ Erro: webcam não encontrada.")
