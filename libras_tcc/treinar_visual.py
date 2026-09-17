@@ -99,7 +99,9 @@ class TreinadorLibras:
         self.root.configure(bg=BG)
         self.root.resizable(True, True)
         self.root.minsize(1100, 680)
-        self.root.geometry('1120x800+0+80')
+        # A câmera, o alfabeto e os controles precisam de área útil. Abrir
+        # maximizado evita que a mão fique pequena ao dividir a janela.
+        self.root.state('zoomed')
         self.camera_index = camera_index
 
         # Estado
