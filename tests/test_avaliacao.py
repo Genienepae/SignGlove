@@ -41,6 +41,20 @@ class AvaliacaoPorParticipanteTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 carregar_dataset_por_participante(raiz, manifesto)
 
+    def test_rejeita_lotes_sobrepostos(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            raiz = Path(pasta)
+            (raiz / 'A.json').write_text(json.dumps([[1], [2], [3]]), encoding='utf-8')
+            manifesto = raiz / 'coletas.jsonl'
+            manifesto.write_text(
+                json.dumps({'participante': 'P01', 'gesto': 'A', 'arquivo_amostras': 'A.json',
+                            'indice_inicio': 0, 'indice_fim': 1}) + '\n' +
+                json.dumps({'participante': 'P02', 'gesto': 'A', 'arquivo_amostras': 'A.json',
+                            'indice_inicio': 1, 'indice_fim': 2}) + '\n', encoding='utf-8')
+
+            with self.assertRaises(ValueError):
+                carregar_dataset_por_participante(raiz, manifesto)
+
     def test_exige_todos_os_gestos_em_cada_treino(self):
         self.assertTrue(divisao_por_participante_disponivel(
             ['A', 'B', 'A', 'B'], ['P01', 'P01', 'P02', 'P02']))

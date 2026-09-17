@@ -21,6 +21,7 @@ def carregar_dataset_por_participante(pasta_amostras: str | Path, manifesto: str
         raise ValueError('Nenhum manifesto de coleta foi encontrado.')
 
     arquivos = {}
+    intervalos_por_arquivo = {}
     features, classes, grupos = [], [], []
     for numero_linha, linha in enumerate(manifesto.read_text(encoding='utf-8').splitlines(), start=1):
         if not linha.strip():
@@ -37,6 +38,12 @@ def carregar_dataset_por_participante(pasta_amostras: str | Path, manifesto: str
 
         if inicio < 0 or fim < inicio:
             raise ValueError(f'Intervalo inválido na linha {numero_linha}.')
+        intervalos_anteriores = intervalos_por_arquivo.setdefault(nome_arquivo, [])
+        if any(inicio <= fim_anterior and fim >= inicio_anterior
+               for inicio_anterior, fim_anterior in intervalos_anteriores):
+            raise ValueError(
+                f'Intervalo sobreposto no arquivo {nome_arquivo}, linha {numero_linha}.')
+        intervalos_anteriores.append((inicio, fim))
         if nome_arquivo not in arquivos:
             caminho = pasta_amostras / nome_arquivo
             if not caminho.exists():
