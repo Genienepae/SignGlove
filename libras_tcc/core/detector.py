@@ -17,6 +17,29 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+# Cada cadeia começa no pulso (0) e termina na ponta do dedo.
+CADEIAS_DEDOS = (
+    (1, 2, 3, 4),
+    (5, 6, 7, 8),
+    (9, 10, 11, 12),
+    (13, 14, 15, 16),
+    (17, 18, 19, 20),
+)
+
+# Cores BGR do OpenCV, uma para cada dedo numerado de 1 a 10.
+CORES_DEDOS = (
+    (40, 40, 240),    # 1 vermelho
+    (0, 150, 255),    # 2 laranja
+    (0, 230, 230),    # 3 amarelo
+    (0, 210, 70),     # 4 verde
+    (235, 210, 0),    # 5 ciano
+    (255, 120, 0),    # 6 azul
+    (220, 40, 170),   # 7 roxo
+    (180, 0, 255),    # 8 rosa
+    (150, 220, 150),  # 9 verde-claro
+    (40, 110, 165),   # 10 marrom
+)
+
 
 class HandDetector:
     """
@@ -44,6 +67,7 @@ class HandDetector:
         )
         self._ultimo_pulso = None
         self.ultimas_maos = []
+        self.ultimos_lados = []
 
     def detect(self, frame):
         """
@@ -76,12 +100,14 @@ class HandDetector:
             # características (uma mão); sinais que exigem duas mãos precisam
             # de coleta e treinamento próprios.
             self.ultimas_maos = [self._extrair_landmarks(item) for item in maos]
-            self.desenhar_maos(frame_anotado, self.ultimas_maos)
+            self.ultimos_lados = self._extrair_lados(resultados, len(maos))
+            self.desenhar_maos(frame_anotado, self.ultimas_maos, self.ultimos_lados)
 
             # Extrai os 21 pontos como lista de (x, y, z)
             landmarks_normalizados = self._extrair_landmarks(mao)
         else:
             self.ultimas_maos = []
+            self.ultimos_lados = []
             self._ultimo_pulso = None
 
         return landmarks_normalizados, frame_anotado, detectou
@@ -99,21 +125,52 @@ class HandDetector:
         self._ultimo_pulso = pulsos[indice]
         return maos[indice]
 
-    def desenhar_maos(self, frame, maos):
-        """Desenha landmarks normalizados sem executar outra inferência."""
+    @staticmethod
+    def _extrair_lados(resultados, quantidade):
+        """Obtém Right/Left do MediaPipe; mantém desenho útil se faltar dado."""
+        classificacoes = getattr(resultados, 'multi_handedness', None) or []
+        lados = []
+        for classificacao in classificacoes:
+            classes = getattr(classificacao, 'classification', [])
+            lado = classes[0].label if classes else 'Right'
+            lados.append(lado)
+        return (lados + ['Right'] * quantidade)[:quantidade]
+
+    def desenhar_maos(self, frame, maos, lados=None):
+        """Desenha as duas mãos com um número e uma cor para cada dedo."""
         altura, largura = frame.shape[:2]
-        for landmarks in maos:
+        lados = lados or ['Right'] * len(maos)
+        for landmarks, lado in zip(maos, lados):
             pontos = np.asarray(landmarks, dtype=np.float32).reshape(21, 3)
             coordenadas = [
                 (int(np.clip(x, 0, 1) * (largura - 1)),
                  int(np.clip(y, 0, 1) * (altura - 1)))
                 for x, y, _ in pontos
             ]
-            for inicio, fim in self.mp_hands.HAND_CONNECTIONS:
-                cv2.line(frame, coordenadas[inicio], coordenadas[fim], (0, 230, 118), 2)
-            for ponto in coordenadas:
-                cv2.circle(frame, ponto, 3, (255, 255, 255), -1)
-                cv2.circle(frame, ponto, 4, (0, 230, 118), 1)
+            inicio_numero = 1 if lado == 'Right' else 6
+            for indice_dedo, cadeia in enumerate(CADEIAS_DEDOS):
+                numero = inicio_numero + indice_dedo
+                cor = CORES_DEDOS[numero - 1]
+                anterior = 0
+                for atual in cadeia:
+                    cv2.line(frame, coordenadas[anterior], coordenadas[atual], cor, 3)
+                    cv2.circle(frame, coordenadas[atual], 5, cor, -1)
+                    cv2.circle(frame, coordenadas[atual], 6, (255, 255, 255), 1)
+                    anterior = atual
+
+                ponta_x, ponta_y = coordenadas[cadeia[-1]]
+                posicao = (ponta_x + 7, max(ponta_y - 7, 18))
+                cv2.putText(frame, str(numero), posicao,
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 3)
+                cv2.putText(frame, str(numero), posicao,
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, cor, 1)
+
+            pulso_x, pulso_y = coordenadas[0]
+            texto_lado = 'DIREITA 1-5' if lado == 'Right' else 'ESQUERDA 6-10'
+            cv2.putText(frame, texto_lado, (pulso_x + 8, pulso_y + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 2)
+            cv2.putText(frame, texto_lado, (pulso_x + 8, pulso_y + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (30, 30, 30), 1)
 
     def _extrair_landmarks(self, hand_landmarks):
         """

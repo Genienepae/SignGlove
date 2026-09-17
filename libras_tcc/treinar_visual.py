@@ -564,7 +564,8 @@ class TreinadorLibras:
                 # não piscam entre inferências, que continuam limitadas a 20 FPS.
                 landmarks, frame_ann, detectou = None, frame.copy(), False
                 if self.detector.ultimas_maos:
-                    self.detector.desenhar_maos(frame_ann, self.detector.ultimas_maos)
+                    self.detector.desenhar_maos(
+                        frame_ann, self.detector.ultimas_maos, self.detector.ultimos_lados)
             else:
                 proxima_deteccao = agora + INTERVALO_DETECCAO_S
                 landmarks, frame_ann, detectou = self.detector.detect(frame)
