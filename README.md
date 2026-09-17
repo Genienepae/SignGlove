@@ -12,6 +12,7 @@ a presença desses scripts não demonstra que esses recursos já foram validados
 
 - [Instalação, execução e limitações técnicas](libras_tcc/README.md).
 - [Diagnóstico e proposta de evolução para o TCC e a FETEPS](docs/PLANO_TCC_FETEPS.md).
+- [Protocolo de coleta com participantes](docs/PROTOCOLO_COLETA.md).
 
 ## Escopo
 
