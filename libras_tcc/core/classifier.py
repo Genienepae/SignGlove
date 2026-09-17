@@ -104,7 +104,16 @@ class ClassificadorGestos:
         if not self.treinado or features is None:
             return None, 0.0, False
 
-        features_2d = features.reshape(1, -1)
+        try:
+            vetor = np.asarray(features, dtype=np.float32).reshape(-1)
+        except (TypeError, ValueError):
+            self._buffer.append(None)
+            return None, 0.0, False
+        if vetor.size != 73 or not np.isfinite(vetor).all():
+            self._buffer.append(None)
+            return None, 0.0, False
+
+        features_2d = vetor.reshape(1, -1)
 
         # Obtém probabilidades de cada classe
         probs = self.modelo.predict_proba(features_2d)[0]

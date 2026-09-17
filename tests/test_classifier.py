@@ -80,6 +80,11 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
             self.prever(clf)
         self.assertEqual(self.prever(clf), (None, 0.5, False))
 
+    def test_entrada_invalida_nao_derruba_classificador(self):
+        clf = self.criar_classificador(['A'])
+        self.assertEqual(clf.prever(np.zeros(72)), (None, 0.0, False))
+        self.assertEqual(clf.prever(np.full(73, np.nan)), (None, 0.0, False))
+
     def test_reset_exige_nova_estabilizacao(self):
         clf = self.criar_classificador(['A'] * 9)
         for _ in range(8):
