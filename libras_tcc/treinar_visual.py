@@ -1091,5 +1091,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Treinador visual de configurações de mão.')
     parser.add_argument('--camera', type=int, default=0,
                         help='Índice da câmera a usar (padrão: 0). Ex.: --camera 1')
+    parser.add_argument('--check', action='store_true',
+                        help='valida o modelo sem abrir janela ou câmera')
     args = parser.parse_args()
+    if args.check:
+        if not os.path.exists(PATH_MODEL):
+            print(f'[ERRO] Modelo não encontrado: {PATH_MODEL}')
+            sys.exit(1)
+        try:
+            with open(PATH_MODEL, 'rb') as arquivo:
+                dados = pickle.load(arquivo)
+            codificador = dados.get('le', dados.get('label_encoder'))
+            if codificador is None or 'modelo' not in dados:
+                raise ValueError('arquivo sem modelo ou codificador de rótulos')
+            print(f'[OK] Modelo visual carregado: {list(codificador.classes_)}')
+            print('[OK] Treinador pronto sem acessar a câmera')
+            sys.exit(0)
+        except (OSError, pickle.PickleError, ValueError, KeyError) as erro:
+            print(f'[ERRO] Modelo visual inválido: {erro}')
+            sys.exit(1)
     TreinadorLibras(args.camera)
