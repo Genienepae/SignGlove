@@ -120,6 +120,12 @@ um resultado mais estável, colete os mesmos gestos com pelo menos três pessoas
 Ele também mostra precisão, recall, F1 e quantidade de amostras por gesto, além
 da matriz de confusão para identificar quais letras foram confundidas.
 
+Antes disso, confira se todos gravaram todos os gestos:
+
+```bash
+python training/verificar_cobertura.py
+```
+
 ### Modo desafio
 
 Depois de treinar a IA, clique em **INICIAR DESAFIO**. O sistema abre o PDF de

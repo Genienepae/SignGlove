@@ -36,7 +36,9 @@ mais pessoas: a prioridade é repetir os mesmos gestos com participantes distint
 
 ## Depois da coleta
 
-1. Confira se `data/metadata/coletas.jsonl` foi criado.
+1. Confira se `data/metadata/coletas.jsonl` foi criado. Execute
+   `python training/verificar_cobertura.py` para ver a tabela de letras por
+   participante e localizar uma coleta faltante.
 2. Treine a IA. Se houver todos os gestos em pelo menos duas pessoas, a interface
    mostrará **acurácia por participante**.
 3. Execute `python training/avaliar_por_participante.py` para registrar acurácia
