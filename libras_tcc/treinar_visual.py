@@ -31,6 +31,7 @@ import os
 import pickle
 import time
 import webbrowser
+from datetime import datetime, timezone
 from collections import deque, Counter
 
 # ── importa os módulos do projeto ──────────────────────────────────────────
@@ -39,6 +40,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
+from core.coletas import registrar_lote, remover_registros_do_gesto, normalizar_codigo_participante
 
 # sklearn
 from sklearn.svm import SVC
@@ -50,6 +52,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 # ── PATHS ──────────────────────────────────────────────────────────────────
 DIR_DADOS  = os.path.join(os.path.dirname(__file__), 'data', 'gestures')
+PATH_MANIFESTO_COLETAS = os.path.join(os.path.dirname(__file__), 'data', 'metadata', 'coletas.jsonl')
 DIR_MODEL  = os.path.join(os.path.dirname(__file__), 'models')
 DIR_REFERENCIAS = os.path.join(os.path.dirname(__file__), 'assets', 'referencias')
 PATH_MODEL = os.path.join(DIR_MODEL, 'modelo_libras.pkl')
@@ -113,6 +116,7 @@ class TreinadorLibras:
         self._progresso_pendente = None
         self._resultado_pendente = None
         self._gravacao_concluida = None
+        self.inicio_coleta_atual = None
         self.caminho_pdf_referencia = self._localizar_pdf_referencia()
 
         self._carregar_dados_existentes()
@@ -147,16 +151,20 @@ class TreinadorLibras:
             except Exception:
                 pass
 
-    def _salvar_gesto(self, nome, lista_features):
+    def _salvar_gesto(self, nome, lista_features, participante):
         path = os.path.join(DIR_DADOS, f'{nome}.json')
         existente = []
         if os.path.exists(path):
             with open(path) as f:
                 existente = json.load(f)
+        indice_inicio = len(existente)
         existente += [f.tolist() for f in lista_features]
         with open(path, 'w') as f:
             json.dump(existente, f)
         self.amostras[nome] = [np.array(d) for d in existente]
+        registrar_lote(
+            PATH_MANIFESTO_COLETAS, participante, nome, f'{nome}.json',
+            indice_inicio, len(lista_features), self.inicio_coleta_atual)
 
     # ── UI ───────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -269,6 +277,18 @@ class TreinadorLibras:
                                     relief='flat', width=10)
         self.entry_gesto.pack(fill='x', ipady=6, padx=2, pady=2)
         self.entry_gesto.insert(0, 'A')
+
+        tk.Label(sf, text='CÓDIGO DO PARTICIPANTE', font=('Courier', 8, 'bold'),
+                 bg=SURFACE, fg=MUTED).pack(anchor='w', **pad, pady=(10, 4))
+        participante_frame = tk.Frame(sf, bg=BORDER, padx=1, pady=1)
+        participante_frame.pack(fill='x', padx=16)
+        self.entry_participante = tk.Entry(
+            participante_frame, font=('Courier', 11, 'bold'), bg=BG, fg=GREEN,
+            insertbackground=GREEN, relief='flat')
+        self.entry_participante.pack(fill='x', ipady=5, padx=2, pady=2)
+        self.entry_participante.insert(0, 'P01')
+        tk.Label(sf, text='Use um código anônimo, ex.: P01. Não escreva nome completo.',
+                 font=('Courier', 7), bg=SURFACE, fg=MUTED).pack(anchor='w', padx=16, pady=(2, 0))
 
         # ─ META DE AMOSTRAS ──────────────────────────────────────────────
         self._sep(sf)
@@ -493,6 +513,7 @@ class TreinadorLibras:
         path = os.path.join(DIR_DADOS, f'{nome}.json')
         if os.path.exists(path):
             os.remove(path)
+        remover_registros_do_gesto(PATH_MANIFESTO_COLETAS, f'{nome}.json')
         self.amostras.pop(nome, None)
         self._atualizar_lista_gestos()
 
@@ -721,7 +742,14 @@ class TreinadorLibras:
             self._set_progresso(0)
         else:
             # Inicia contagem regressiva
+            try:
+                participante = normalizar_codigo_participante(self.entry_participante.get())
+            except ValueError as erro:
+                messagebox.showwarning('Código do participante', str(erro))
+                return
             self.gesto_atual = nome
+            self.participante_atual = participante
+            self.inicio_coleta_atual = datetime.now(timezone.utc).isoformat()
             self.modo = 'contagem'
             self._espaco_flag = False
             self.btn_gravar.config(text='■ CANCELAR', bg=RED)
@@ -752,7 +780,7 @@ class TreinadorLibras:
 
     def _finalizar_gravacao(self, nome, amostras):
         """Salva as amostras; o loop do Tk fará a atualização visual."""
-        self._salvar_gesto(nome, amostras)
+        self._salvar_gesto(nome, amostras, self.participante_atual)
         self._gravacao_concluida = (nome, len(amostras))
 
     def _pos_gravacao(self, nome, n):
@@ -761,7 +789,7 @@ class TreinadorLibras:
         self._set_progresso(0)
         self._atualizar_lista_gestos()
         self.status_bar.config(
-            text=f'✓  {n} amostras de "{nome}" salvas!  Grave outro gesto ou treine a IA.', fg=GREEN)
+            text=f'✓  {n} amostras de "{nome}" salvas para {self.participante_atual}!', fg=GREEN)
 
     # ── TREINO ───────────────────────────────────────────────────────────
     def _treinar(self):

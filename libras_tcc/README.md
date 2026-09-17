@@ -95,6 +95,15 @@ cruzada e usa o melhor candidato para aquele conjunto.
 A referência é material de consulta; valide a seleção de sinais e qualquer
 orientação de prática com uma pessoa formada em Libras.
 
+### Coleta com participantes
+
+Antes de gravar, informe um **código anônimo** de participante, como `P01` ou
+`P02`; não use nome completo. Cada gravação nova gera um registro em
+`data/metadata/coletas.jsonl` com o código, gesto, horário e intervalo das
+amostras daquele lote. Esses registros permitem reservar participantes inteiros
+para testes futuros. As amostras antigas não têm esse histórico e não devem ser
+apresentadas como coleta por participante.
+
 ### 4. Executar o reconhecimento em tempo real
 ```bash
 python main.py
