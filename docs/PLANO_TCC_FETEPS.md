@@ -1,6 +1,6 @@
 # SignGlove: diagnóstico e proposta para o TCC
 
-Revisão em 16/09/2026, a partir do commit `05ef86f`. Contexto: TCC de
+Revisão em 17/09/2026, a partir do commit `9ff3ac2`. Contexto: TCC de
 Desenvolvimento de Sistemas da Etec de Registro, previsto para o próximo ano,
 com interesse em participar da FETEPS. O estudante tem uma tia formada em Libras;
 a participação dela ainda precisa ser combinada.
@@ -26,13 +26,14 @@ e avaliação do ganho de aprendizagem. É uma proposta a construir e testar.
 | Avaliação estática | `training/treinar_modelo.py` usa grupos quando há manifesto completo e avisa quando não há | Dados antigos sem participante continuam inadequados para afirmar generalização. |
 | Avaliação visual | `treinar_visual.py` seleciona o modelo por grupos quando a cobertura permite | Sem lotes completos por participante, a tela mantém a métrica por amostra. |
 | Avaliação LSTM | Sequências aumentadas antes da divisão interna de treino e validação | Mesmo risco de compartilhar versões de uma sequência. |
-| Persistência | Interface salva `modelo` e `le`; classificador principal espera `modelo`, `label_encoder` e configurações | Unificar formatos antes de alternar entre os caminhos de treinamento. |
+| Persistência | Os dois treinadores salvam codificador, algoritmo, versão do formato e quantidade de features | O `--check` valida o modelo antes de abrir a câmera. |
 | Confirmação | Uma predição podia herdar a confirmação da classe anterior | Corrigido nesta revisão, com testes de troca de classe e limites da janela. |
 | Luva | Sem firmware ou integração com sensores no repositório | É uma proposta futura, não um recurso implementado. |
 
 A revisão não mediu acurácia com novos participantes, latência de webcam ou
-qualidade dos sinais. O arquivo de modelo existente não foi desserializado.
-As demais pendências técnicas da tabela continuam abertas.
+qualidade dos sinais. O modelo versionado foi desserializado e validado com os
+comandos `main.py --check` e `treinar_visual.py --check`. As demais pendências
+técnicas da tabela continuam abertas.
 
 ## Feira e projetos semelhantes
 
