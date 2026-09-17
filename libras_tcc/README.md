@@ -73,12 +73,12 @@ python -m pip install -r requirements.txt
 ### 2. Coletar amostras de cada gesto
 ```bash
 # Coleta 200 amostras da letra A
-python training/coletar_dados.py --gesto A --amostras 200
+python training/coletar_dados.py --gesto A --amostras 200 --participante P01 --sessao S01
 
 # Repita para cada gesto que quiser reconhecer
-python training/coletar_dados.py --gesto B --amostras 200
-python training/coletar_dados.py --gesto C --amostras 200
-python training/coletar_dados.py --gesto D --amostras 200
+python training/coletar_dados.py --gesto B --amostras 200 --participante P01 --sessao S01
+python training/coletar_dados.py --gesto C --amostras 200 --participante P01 --sessao S01
+python training/coletar_dados.py --gesto D --amostras 200 --participante P01 --sessao S01
 ```
 > **Dica:** Pressione ESPAÇO para iniciar/pausar a coleta dentro do programa.
 

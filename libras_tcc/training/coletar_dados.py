@@ -22,15 +22,18 @@ import argparse
 import os
 import json
 import sys
+from datetime import datetime, timezone
 
 # Adiciona a raiz do projeto ao path para importar os módulos
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
+from core.coletas import registrar_lote, normalizar_codigo_participante, normalizar_codigo_sessao
 
 
-def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str):
+def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str,
+                     participante: str, sessao: str, camera_index: int = 0):
     """
     Abre a webcam e coleta amostras do gesto especificado.
 
@@ -39,6 +42,9 @@ def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str):
     """
     os.makedirs(pasta_saida, exist_ok=True)
     caminho_saida = os.path.join(pasta_saida, f"{nome_gesto}.json")
+    participante = normalizar_codigo_participante(participante)
+    sessao = normalizar_codigo_sessao(sessao)
+    inicio_coleta = datetime.now(timezone.utc).isoformat()
 
     # Carrega amostras já existentes (para poder adicionar mais depois)
     amostras_existentes = []
@@ -47,8 +53,11 @@ def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str):
             amostras_existentes = json.load(f)
         print(f"📁 Encontradas {len(amostras_existentes)} amostras anteriores para '{nome_gesto}'")
 
-    detector = HandDetector(min_detection_confidence=0.8)
-    cap = cv2.VideoCapture(0)
+    detector = HandDetector(min_detection_confidence=0.8, model_complexity=0)
+    cap = cv2.VideoCapture(camera_index)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     if not cap.isOpened():
         print("❌ Erro: não foi possível abrir a webcam.")
@@ -142,9 +151,13 @@ def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str):
 
     # Salva as amostras
     if novas_amostras:
+        indice_inicio = len(amostras_existentes)
         todas = amostras_existentes + novas_amostras
         with open(caminho_saida, 'w') as f:
             json.dump(todas, f)
+        manifesto = os.path.join(os.path.dirname(pasta_saida), 'metadata', 'coletas.jsonl')
+        registrar_lote(manifesto, participante, nome_gesto, os.path.basename(caminho_saida),
+                       indice_inicio, len(novas_amostras), sessao, inicio_coleta)
         print(f"\n💾 Salvo: {caminho_saida}")
         print(f"   Total de amostras para '{nome_gesto}': {len(todas)}")
     else:
@@ -159,6 +172,13 @@ if __name__ == '__main__':
                         help='Quantidade de amostras a coletar (padrão: 200)')
     parser.add_argument('--pasta', type=str, default='data/gestures',
                         help='Pasta onde salvar os dados')
+    parser.add_argument('--participante', type=str, required=True,
+                        help='Código anônimo, por exemplo P01')
+    parser.add_argument('--sessao', type=str, required=True,
+                        help='Código da sessão, por exemplo S01')
+    parser.add_argument('--camera', type=int, default=0,
+                        help='Índice da câmera (padrão: 0)')
     args = parser.parse_args()
 
-    coletar_amostras(args.gesto, args.amostras, args.pasta)
+    coletar_amostras(args.gesto, args.amostras, args.pasta,
+                      args.participante, args.sessao, args.camera)
