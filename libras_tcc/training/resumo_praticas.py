@@ -36,7 +36,7 @@ def main():
 
     print('\nRESUMO DE PRÁTICAS')
     print(f"Sessões: {resumo['sessoes']}")
-    print('Participante | Sessões | Acertos | Erros | Tempo')
+    print('Participante | Sessões | Acertos | Erros | Taxa | Tempo')
     print(f"Total: {resumo['acertos']} acertos / {resumo['erros']} erros "
           f"({resumo['taxa_acerto'] * 100:.1f}% de acerto)")
     for codigo, dados in sorted(resumo['participantes'].items()):
