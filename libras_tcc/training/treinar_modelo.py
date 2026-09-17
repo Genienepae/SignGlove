@@ -25,7 +25,9 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 
-def salvar_resumo_treino(caminho, acuracia, f1_macro, criterio_metrica, classes, amostras):
+def salvar_resumo_treino(
+    caminho, acuracia, f1_macro, criterio_metrica, classes, amostras, por_gesto
+):
     """Salva as métricas principais do treinamento em JSON."""
     destino = os.path.abspath(caminho)
     os.makedirs(os.path.dirname(destino), exist_ok=True)
@@ -36,6 +38,7 @@ def salvar_resumo_treino(caminho, acuracia, f1_macro, criterio_metrica, classes,
             'criterio_metrica': criterio_metrica,
             'gestos': sorted(set(classes)),
             'amostras': int(amostras),
+            'por_gesto': por_gesto,
         }, arquivo, ensure_ascii=False, indent=2)
         arquivo.write('\n')
 
@@ -105,6 +108,7 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
             'acuracia': resultado['acuracia'],
             'f1_macro': resultado['f1_macro'],
             'criterio_metrica': 'por participante',
+            'por_gesto': resultado['por_gesto'],
         }
     except ValueError as erro:
         motivos_esperados = (
@@ -136,7 +140,8 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
 
     # Relatório de classificação (precisão, recall, F1 por classe)
     print("\n[INFO] Relatório por gesto:")
-    print(classification_report(y_test_nomes, y_pred))
+    relatorio = classification_report(y_test_nomes, y_pred, output_dict=True, zero_division=0)
+    print(classification_report(y_test_nomes, y_pred, zero_division=0))
 
     # Acurácia geral
     acuracia = np.mean(y_pred == y_test_nomes)
@@ -158,6 +163,15 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
         'acuracia': float(acuracia),
         'f1_macro': float(f1_score(y_test_nomes, y_pred, average='macro', zero_division=0)),
         'criterio_metrica': 'por amostra',
+        'por_gesto': {
+            gesto: {
+                'precisao': float(relatorio[gesto]['precision']),
+                'recall': float(relatorio[gesto]['recall']),
+                'f1': float(relatorio[gesto]['f1-score']),
+                'amostras': int(relatorio[gesto]['support']),
+            }
+            for gesto in sorted(set(y_test_nomes))
+        },
     }
 
 
@@ -197,7 +211,7 @@ def main():
     if args.saida:
         salvar_resumo_treino(
             args.saida, metricas['acuracia'], metricas['f1_macro'],
-            metricas['criterio_metrica'], y, len(X))
+            metricas['criterio_metrica'], y, len(X), metricas['por_gesto'])
         print(f"[OK] Resumo salvo em: {os.path.abspath(args.saida)}")
     print(f"   Para usar: python main.py")
 
