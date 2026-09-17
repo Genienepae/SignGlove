@@ -38,7 +38,7 @@ def carregar_sequencias(pasta: str):
     print("📂 Carregando sequências:")
     for arq in sorted(arquivos):
         nome = arq.replace('.json', '')
-        with open(os.path.join(pasta, arq)) as f:
+        with open(os.path.join(pasta, arq), encoding='utf-8') as f:
             seqs = json.load(f)
 
         # Garante que todas as sequências têm o tamanho certo

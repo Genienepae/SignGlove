@@ -153,7 +153,7 @@ class TreinadorLibras:
         for arq in os.listdir(DIR_DADOS):
             if arq.endswith('.json'):
                 nome = arq[:-5]
-                with open(os.path.join(DIR_DADOS, arq)) as f:
+                with open(os.path.join(DIR_DADOS, arq), encoding='utf-8') as f:
                     dados = json.load(f)
                 self.amostras[nome] = [np.array(d) for d in dados]
         if self.amostras:
@@ -175,11 +175,11 @@ class TreinadorLibras:
         path = os.path.join(DIR_DADOS, f'{nome}.json')
         existente = []
         if os.path.exists(path):
-            with open(path) as f:
+            with open(path, encoding='utf-8') as f:
                 existente = json.load(f)
         indice_inicio = len(existente)
         existente += [f.tolist() for f in lista_features]
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             json.dump(existente, f)
         self.amostras[nome] = [np.array(d) for d in existente]
         registrar_lote(

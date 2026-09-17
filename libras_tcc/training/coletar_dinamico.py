@@ -43,7 +43,7 @@ def coletar_sequencias(nome_gesto: str, n_repeticoes: int, pasta_saida: str):
     # Carrega existentes
     sequencias = []
     if os.path.exists(caminho):
-        with open(caminho, 'r') as f:
+        with open(caminho, 'r', encoding='utf-8') as f:
             sequencias = json.load(f)
         print(f"📁 {len(sequencias)} sequências existentes para '{nome_gesto}'")
 
@@ -169,7 +169,7 @@ def coletar_sequencias(nome_gesto: str, n_repeticoes: int, pasta_saida: str):
 
     if novas:
         todas = sequencias + novas
-        with open(caminho, 'w') as f:
+        with open(caminho, 'w', encoding='utf-8') as f:
             json.dump(todas, f)
         print(f"\n💾 Salvo: {caminho}")
         print(f"   Total de sequências para '{nome_gesto}': {len(todas)}")

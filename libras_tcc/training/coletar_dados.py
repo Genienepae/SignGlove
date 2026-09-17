@@ -49,7 +49,7 @@ def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str,
     # Carrega amostras já existentes (para poder adicionar mais depois)
     amostras_existentes = []
     if os.path.exists(caminho_saida):
-        with open(caminho_saida, 'r') as f:
+        with open(caminho_saida, 'r', encoding='utf-8') as f:
             amostras_existentes = json.load(f)
         print(f"📁 Encontradas {len(amostras_existentes)} amostras anteriores para '{nome_gesto}'")
 
@@ -153,7 +153,7 @@ def coletar_amostras(nome_gesto: str, qtd_amostras: int, pasta_saida: str,
     if novas_amostras:
         indice_inicio = len(amostras_existentes)
         todas = amostras_existentes + novas_amostras
-        with open(caminho_saida, 'w') as f:
+        with open(caminho_saida, 'w', encoding='utf-8') as f:
             json.dump(todas, f)
         manifesto = os.path.join(os.path.dirname(pasta_saida), 'metadata', 'coletas.jsonl')
         registrar_lote(manifesto, participante, nome_gesto, os.path.basename(caminho_saida),

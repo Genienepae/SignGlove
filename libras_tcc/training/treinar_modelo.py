@@ -45,7 +45,7 @@ def carregar_dataset(pasta_dados: str):
         nome_gesto = arquivo.replace('.json', '')
         caminho = os.path.join(pasta_dados, arquivo)
 
-        with open(caminho, 'r') as f:
+        with open(caminho, 'r', encoding='utf-8') as f:
             amostras = json.load(f)
 
         X.extend(amostras)
