@@ -12,6 +12,7 @@ Controles:
     ESPAÇO   → adicionar espaço ao texto
 """
 
+import argparse
 import cv2
 import numpy as np
 import os
@@ -90,7 +91,7 @@ def desenhar_hud(frame, gesto, confianca, confirmado, texto_acumulado, fps):
     return frame
 
 
-def main():
+def main(camera_index=0):
     # Verifica se o modelo foi treinado
     if not os.path.exists(CAMINHO_MODELO):
         print(f"❌ Modelo não encontrado: {CAMINHO_MODELO}")
@@ -114,13 +115,13 @@ def main():
     )
     classificador.carregar(CAMINHO_MODELO)
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(camera_index)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, LARGURA_CAMERA)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, ALTURA_CAMERA)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     if not cap.isOpened():
-        print("❌ Erro: webcam não encontrada.")
+        print(f"❌ Erro: câmera {camera_index} não encontrada ou ocupada por outro programa.")
         sys.exit(1)
 
     texto_acumulado = ""
@@ -198,4 +199,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Reconhecimento de configurações de mão.')
+    parser.add_argument('--camera', type=int, default=0,
+                        help='Índice da câmera a usar (padrão: 0). Ex.: --camera 1')
+    args = parser.parse_args()
+    main(args.camera)
