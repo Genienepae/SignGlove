@@ -22,16 +22,17 @@ from core.avaliacao import carregar_dataset_por_participante, avaliar_svm_por_pa
 
 # Sklearn para métricas de avaliação
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 
-def salvar_resumo_treino(caminho, acuracia, criterio_metrica, classes, amostras):
+def salvar_resumo_treino(caminho, acuracia, f1_macro, criterio_metrica, classes, amostras):
     """Salva as métricas principais do treinamento em JSON."""
     destino = os.path.abspath(caminho)
     os.makedirs(os.path.dirname(destino), exist_ok=True)
     with open(destino, 'w', encoding='utf-8') as arquivo:
         json.dump({
             'acuracia': float(acuracia),
+            'f1_macro': float(f1_macro),
             'criterio_metrica': criterio_metrica,
             'gestos': sorted(set(classes)),
             'amostras': int(amostras),
@@ -100,7 +101,11 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
         for gesto, metricas in resultado['por_gesto'].items():
             print(f"   {gesto}: precisão {metricas['precisao'] * 100:.1f}% | "
                   f"recall {metricas['recall'] * 100:.1f}% | F1 {metricas['f1'] * 100:.1f}%")
-        return resultado['acuracia'], 'por participante'
+        return {
+            'acuracia': resultado['acuracia'],
+            'f1_macro': resultado['f1_macro'],
+            'criterio_metrica': 'por participante',
+        }
     except ValueError as erro:
         motivos_esperados = (
             'Nenhum manifesto de coleta foi encontrado.',
@@ -149,7 +154,11 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
     print(f"   Acurácia por fold: {[f'{s*100:.1f}%' for s in scores]}")
     print(f"   Média: {scores.mean()*100:.1f}% ± {scores.std()*100:.1f}%")
 
-    return acuracia, 'por amostra'
+    return {
+        'acuracia': float(acuracia),
+        'f1_macro': float(f1_score(y_test_nomes, y_pred, average='macro', zero_division=0)),
+        'criterio_metrica': 'por amostra',
+    }
 
 
 def main():
@@ -172,7 +181,7 @@ def main():
         buffer_frames=8
     )
 
-    acuracia, criterio_metrica = avaliar_modelo(classificador, X, y, pasta_dados, manifesto)
+    metricas = avaliar_modelo(classificador, X, y, pasta_dados, manifesto)
 
     # Re-treina com TODOS os dados para salvar o modelo final
     print("\n[INFO] Retreinando com 100% dos dados para o modelo final...")
@@ -182,9 +191,13 @@ def main():
     caminho_modelo = os.path.join(pasta_modelos, 'modelo_libras.pkl')
     classificador.salvar(caminho_modelo)
 
-    print(f"\n[OK] Pronto! Acurácia {criterio_metrica} estimada: {acuracia*100:.1f}%")
+    print(f"\n[OK] Pronto! Acurácia {metricas['criterio_metrica']} estimada: "
+          f"{metricas['acuracia']*100:.1f}%")
+    print(f"[OK] F1 macro: {metricas['f1_macro']*100:.1f}%")
     if args.saida:
-        salvar_resumo_treino(args.saida, acuracia, criterio_metrica, y, len(X))
+        salvar_resumo_treino(
+            args.saida, metricas['acuracia'], metricas['f1_macro'],
+            metricas['criterio_metrica'], y, len(X))
         print(f"[OK] Resumo salvo em: {os.path.abspath(args.saida)}")
     print(f"   Para usar: python main.py")
 
