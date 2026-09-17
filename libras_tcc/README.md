@@ -46,6 +46,15 @@ libras_tcc/
 
 ## 🚀 Como Executar (passo a passo)
 
+Antes de uma demonstração, confira o estado local sem abrir câmera:
+
+```bash
+python training/diagnosticar_projeto.py
+```
+
+Ele informa quantidade de amostras, modelo salvo e se a avaliação por participante
+já pode ser feita.
+
 ### 1. Instalar dependências
 
 Use Python 3.12 com as versões fixadas neste projeto. A partir da raiz do
