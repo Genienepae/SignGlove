@@ -4,7 +4,7 @@ training/coletar_dados.py
 Modo de treinamento: abre a webcam e coleta amostras de um gesto específico.
 
 Como usar:
-    python training/coletar_dados.py --gesto A --amostras 200
+    python training/coletar_dados.py --gesto A --amostras 200 --participante P01 --sessao S01
 
 Cada letra/sinal de Libras precisa de pelo menos 100-200 amostras para
 o modelo aprender com boa precisão.
