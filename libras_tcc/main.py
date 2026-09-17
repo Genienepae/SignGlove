@@ -25,7 +25,7 @@ from core.classifier import ClassificadorGestos
 
 # ─── Configurações ───────────────────────────────────────────────────────────
 
-CAMINHO_MODELO = 'models/modelo_libras.pkl'
+CAMINHO_MODELO = os.path.join(os.path.dirname(__file__), 'models', 'modelo_libras.pkl')
 CONFIANCA_MINIMA = 0.75       # só mostra predição com >= 75% de confiança
 BUFFER_FRAMES = 8             # frames necessários para confirmar um gesto
 COOLDOWN_SEGUNDOS = 1.5       # tempo mínimo entre duas confirmações

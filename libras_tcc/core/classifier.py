@@ -170,11 +170,16 @@ class ClassificadorGestos:
             dados = pickle.load(f)
 
         self.modelo = dados['modelo']
-        self.label_encoder = dados['label_encoder']
-        self.algoritmo = dados['algoritmo']
-        self.confianca_minima = dados['confianca_minima']
+        # O treinador visual histórico usa "le"; o classificador usa
+        # "label_encoder". Aceitamos ambos para que as duas interfaces abram
+        # o mesmo modelo salvo.
+        self.label_encoder = dados.get('label_encoder', dados.get('le'))
+        if self.label_encoder is None:
+            raise ValueError('Modelo sem codificador de rótulos (label_encoder ou le).')
+        self.algoritmo = dados.get('algoritmo', dados.get('nome_modelo', 'modelo externo'))
+        self.confianca_minima = dados.get('confianca_minima', self.confianca_minima)
         self.treinado = True
-        print(f"📂 Modelo carregado: {list(self.label_encoder.classes_)}")
+        print(f"[OK] Modelo carregado: {list(self.label_encoder.classes_)}")
 
     def resetar_buffer(self):
         """Limpa o buffer temporal (use ao trocar de gesto intencionalmente)."""

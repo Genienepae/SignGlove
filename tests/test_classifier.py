@@ -1,6 +1,9 @@
 """Regressões da confirmação temporal, sem webcam ou modelo serializado."""
 
 import unittest
+import pickle
+import tempfile
+from pathlib import Path
 
 import numpy as np
 
@@ -15,6 +18,11 @@ class ModeloComProbabilidades:
 
     def predict_proba(self, features):
         return np.array([next(self.probabilidades)])
+
+
+class ModeloFixo:
+    def predict_proba(self, features):
+        return np.array([[0.9, 0.1]])
 
 
 class ConfirmacaoTemporalTests(unittest.TestCase):
@@ -78,6 +86,20 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
             self.prever(clf)
         clf.resetar_buffer()
         self.assertFalse(self.prever(clf)[2])
+
+    def test_carrega_formato_do_treinador_visual(self):
+        original = self.criar_classificador(['A'])
+        with tempfile.TemporaryDirectory() as pasta:
+            caminho = Path(pasta) / 'modelo.pkl'
+            with caminho.open('wb') as arquivo:
+                pickle.dump({'modelo': ModeloFixo(), 'le': original.label_encoder,
+                             'nome_modelo': 'SVM'}, arquivo)
+            classificador = ClassificadorGestos(confianca_minima=0.8)
+            classificador.carregar(str(caminho))
+
+        self.assertEqual(list(classificador.label_encoder.classes_), ['A', 'B'])
+        self.assertEqual(classificador.algoritmo, 'SVM')
+        self.assertEqual(classificador.confianca_minima, 0.8)
 
 
 if __name__ == '__main__':
