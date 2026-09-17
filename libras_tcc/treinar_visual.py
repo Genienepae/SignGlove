@@ -1108,7 +1108,12 @@ if __name__ == '__main__':
             codificador = dados.get('le', dados.get('label_encoder'))
             if codificador is None or 'modelo' not in dados:
                 raise ValueError('arquivo sem modelo ou codificador de rótulos')
+            dimensao = getattr(dados['modelo'], 'n_features_in_', None)
+            if dimensao is not None and dimensao != 73:
+                raise ValueError(f'modelo espera {dimensao} features; o projeto usa 73')
             print(f'[OK] Modelo visual carregado: {list(codificador.classes_)}')
+            if dimensao is not None:
+                print(f'[OK] Dimensão de entrada compatível: {dimensao} features')
             print('[OK] Treinador pronto sem acessar a câmera')
             sys.exit(0)
         except (OSError, pickle.PickleError, EOFError, AttributeError,
