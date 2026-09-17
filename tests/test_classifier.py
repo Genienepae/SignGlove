@@ -85,6 +85,12 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
         self.assertEqual(clf.prever(np.zeros(72)), (None, 0.0, False))
         self.assertEqual(clf.prever(np.full(73, np.nan)), (None, 0.0, False))
 
+    def test_svm_usa_pesos_balanceados(self):
+        x = np.vstack((np.zeros((3, 73)), np.ones((3, 73))))
+        classificador = ClassificadorGestos(algoritmo='svm')
+        classificador.treinar(x, ['A'] * 3 + ['B'] * 3)
+        self.assertEqual(classificador.modelo.named_steps['svm'].class_weight, 'balanced')
+
     def test_reset_exige_nova_estabilizacao(self):
         clf = self.criar_classificador(['A'] * 9)
         for _ in range(8):

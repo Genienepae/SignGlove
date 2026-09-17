@@ -97,6 +97,10 @@ acurácia, F1 macro, critério de avaliação, gestos e quantidade de amostras. 
 os dados atuais, são estimativas exploratórias por amostra, não uma avaliação em
 pessoas novas.
 
+Como A tem mais amostras que as outras letras atuais, a SVM é treinada com pesos
+balanceados por classe. Isso reduz o viés para a letra mais frequente; confirme o
+efeito com F1 macro e avaliação por participante depois de uma nova coleta.
+
 ### Treinador visual
 
 ```bash

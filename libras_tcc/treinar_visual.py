@@ -888,7 +888,7 @@ class TreinadorLibras:
                 'SVM': Pipeline([
                 ('sc', StandardScaler()),
                 ('svm', SVC(kernel='rbf', C=10, gamma='scale',
-                             probability=True, random_state=42))
+                             probability=True, class_weight='balanced', random_state=42))
                 ]),
                 'Floresta aleatória': RandomForestClassifier(
                     n_estimators=250, min_samples_leaf=2, class_weight='balanced',

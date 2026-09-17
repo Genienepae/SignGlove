@@ -82,6 +82,7 @@ class ClassificadorGestos:
                     probability=True,      # necessário para obter confiança
                     C=10,
                     gamma='scale',
+                    class_weight='balanced',
                     random_state=42
                 ))
             ])

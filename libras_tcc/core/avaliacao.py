@@ -92,7 +92,8 @@ def avaliar_svm_por_participante(features, classes, grupos) -> dict:
     for treino, teste in divisao.split(features, classes, grupos):
         modelo = Pipeline([
             ('escala', StandardScaler()),
-            ('svm', SVC(kernel='rbf', C=10, gamma='scale', random_state=42)),
+            ('svm', SVC(kernel='rbf', C=10, gamma='scale', class_weight='balanced',
+                        random_state=42)),
         ])
         modelo.fit(features[treino], classes[treino])
         previsoes[teste] = modelo.predict(features[teste])
