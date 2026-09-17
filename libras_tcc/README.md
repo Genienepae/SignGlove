@@ -166,6 +166,12 @@ Para resumir as sessões já registradas, sem abrir a câmera:
 python training/resumo_praticas.py
 ```
 
+Para guardar o resumo em JSON e anexar as métricas ao relatório:
+
+```powershell
+python training/resumo_praticas.py --saida reports/resumo_praticas.json
+```
+
 O resumo mostra também a taxa de acerto agregada por participante. Ele descreve o
 uso do protótipo e não comprova ganho de aprendizagem sem
 um protocolo de avaliação definido com o orientador.

@@ -2,6 +2,8 @@
 
 import os
 import sys
+import argparse
+import json
 
 PASTA_RAIZ = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, PASTA_RAIZ)
@@ -10,12 +12,23 @@ from core.relatorio_praticas import resumir_praticas
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Resume sessões de prática do SignGlove.')
+    parser.add_argument('--saida', help='arquivo JSON para salvar o resumo')
+    args = parser.parse_args()
     caminho = os.path.join(PASTA_RAIZ, 'data', 'metadata', 'praticas.jsonl')
     try:
         resumo = resumir_praticas(caminho)
     except ValueError as erro:
         print(f'Não foi possível gerar o resumo: {erro}')
         return 1
+
+    if args.saida:
+        destino = os.path.abspath(args.saida)
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        with open(destino, 'w', encoding='utf-8') as arquivo:
+            json.dump(resumo, arquivo, ensure_ascii=False, indent=2)
+            arquivo.write('\n')
+        print(f'Resumo salvo em: {destino}')
 
     if not resumo['sessoes']:
         print('Ainda não há sessões de desafio registradas.')
