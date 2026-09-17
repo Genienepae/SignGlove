@@ -550,6 +550,9 @@ class TreinadorLibras:
         coletando       = False
         t_inicio        = 0
         proxima_deteccao = 0.0
+        predicao_visual = None
+        confianca_visual = 0.0
+        falhas_deteccao = 0
 
         while self.rodando:
             ret, frame = self.cap.read()
@@ -559,7 +562,8 @@ class TreinadorLibras:
 
             frame = cv2.flip(frame, 1)
             agora = time.monotonic()
-            if agora < proxima_deteccao:
+            executou_deteccao = agora >= proxima_deteccao
+            if not executou_deteccao:
                 # Exibe os últimos traços no frame atual. Assim os landmarks
                 # não piscam entre inferências, que continuam limitadas a 20 FPS.
                 landmarks, frame_ann, detectou = None, frame.copy(), False
@@ -644,7 +648,7 @@ class TreinadorLibras:
                             coletando = False
                             self._finalizar_gravacao(gesto, novas_amostras)
                             novas_amostras = []
-                else:
+                elif executou_deteccao:
                     cv2.putText(frame_ann, '⚠  MÃO NÃO DETECTADA', (12, h - 18),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 100, 255), 2)
 
@@ -663,6 +667,7 @@ class TreinadorLibras:
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 145, 0), 2)
 
                 if detectou and landmarks is not None and self.treinado:
+                    falhas_deteccao = 0
                     feat = extrair_features(landmarks)
                     if feat is not None:
                         probs = self.modelo.predict_proba(feat.reshape(1, -1))[0]
@@ -678,15 +683,25 @@ class TreinadorLibras:
                             mais, cnt = Counter(validos).most_common(1)[0]
                             if cnt / len(self._buf_teste) >= 0.6:
                                 self._resultado_pendente = (mais, conf)
+                                predicao_visual = mais
+                                confianca_visual = conf
+                elif executou_deteccao:
+                    # Não apaga a letra por uma falha pontual. Só considera
+                    # que a mão saiu após quatro leituras consecutivas (~0,2 s).
+                    falhas_deteccao += 1
+                    if falhas_deteccao >= 4:
+                        self._buf_teste.clear()
+                        predicao_visual = None
+                        confianca_visual = 0.0
 
-                        if conf >= CONFIANCA_TESTE_MINIMA:
-                            cv2.putText(frame_ann, pred, (12, h - 50),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 230, 118), 3)
-                            cv2.putText(frame_ann, f'{conf*100:.0f}%', (12, h - 20),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 230, 118), 2)
-                        else:
-                            cv2.putText(frame_ann, '?', (12, h - 50),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, (100, 100, 100), 3)
+                if predicao_visual:
+                    cv2.putText(frame_ann, predicao_visual, (12, h - 50),
+                                cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 230, 118), 3)
+                    cv2.putText(frame_ann, f'{confianca_visual*100:.0f}%', (12, h - 20),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 230, 118), 2)
+                else:
+                    cv2.putText(frame_ann, '?', (12, h - 50),
+                                cv2.FONT_HERSHEY_SIMPLEX, 2.5, (100, 100, 100), 3)
 
             # ── MODO IDLE ─────────────────────────────────────────────────
             else:
