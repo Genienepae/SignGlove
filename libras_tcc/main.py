@@ -32,6 +32,7 @@ BUFFER_FRAMES = 8             # frames necessários para confirmar um gesto
 COOLDOWN_SEGUNDOS = 1.5       # tempo mínimo entre duas confirmações
 LARGURA_CAMERA = 640
 ALTURA_CAMERA = 480
+INTERVALO_DETECCAO_S = 0.05  # limita o MediaPipe a 20 inferências por segundo
 
 # Cores (BGR)
 VERDE    = (0, 220, 100)
@@ -136,6 +137,9 @@ def main(camera_index=0, check_only=False):
     fps_contador = 0
     fps_tempo = time.time()
     fps_atual = 0
+    proxima_deteccao = 0.0
+    gesto_visual = None
+    confianca_visual = 0.0
 
     print("[OK] Sistema pronto! Pressione Q para sair.\n")
 
@@ -155,15 +159,23 @@ def main(camera_index=0, check_only=False):
             fps_tempo = agora
 
         # Detecta mão e extrai landmarks
-        landmarks, frame_anotado, detectou = detector.detect(frame)
+        executou_deteccao = time.monotonic() >= proxima_deteccao
+        if executou_deteccao:
+            proxima_deteccao = time.monotonic() + INTERVALO_DETECCAO_S
+            landmarks, frame_anotado, detectou = detector.detect(frame)
+        else:
+            landmarks, frame_anotado, detectou = None, frame, False
 
         gesto_atual = None
         confianca_atual = 0.0
         confirmado_agora = False
 
-        if detectou and landmarks is not None:
+        if not executou_deteccao:
+            gesto_atual, confianca_atual = gesto_visual, confianca_visual
+        elif detectou and landmarks is not None:
             features = extrair_features(landmarks)
             gesto_atual, confianca_atual, confirmado_agora = classificador.prever(features)
+            gesto_visual, confianca_visual = gesto_atual, confianca_atual
 
             # Adiciona ao texto se confirmado e passou o cooldown
             if (confirmado_agora and
@@ -178,6 +190,7 @@ def main(camera_index=0, check_only=False):
             # Sem mão → reseta para evitar acúmulo indevido no buffer
             classificador.resetar_buffer()
             ultimo_confirmado = ""
+            gesto_visual, confianca_visual = None, 0.0
 
         # Desenha interface
         frame_final = desenhar_hud(
