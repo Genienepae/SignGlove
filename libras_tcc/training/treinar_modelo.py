@@ -12,6 +12,7 @@ O modelo treinado é salvo em: models/modelo_libras.pkl
 import os
 import sys
 import json
+import argparse
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -22,6 +23,20 @@ from core.avaliacao import carregar_dataset_por_participante, avaliar_svm_por_pa
 # Sklearn para métricas de avaliação
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix
+
+
+def salvar_resumo_treino(caminho, acuracia, criterio_metrica, classes, amostras):
+    """Salva as métricas principais do treinamento em JSON."""
+    destino = os.path.abspath(caminho)
+    os.makedirs(os.path.dirname(destino), exist_ok=True)
+    with open(destino, 'w', encoding='utf-8') as arquivo:
+        json.dump({
+            'acuracia': float(acuracia),
+            'criterio_metrica': criterio_metrica,
+            'gestos': sorted(set(classes)),
+            'amostras': int(amostras),
+        }, arquivo, ensure_ascii=False, indent=2)
+        arquivo.write('\n')
 
 
 def carregar_dataset(pasta_dados: str):
@@ -138,6 +153,9 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Treina o modelo estático do SignGlove.')
+    parser.add_argument('--saida', help='arquivo JSON para salvar o resumo das métricas')
+    args = parser.parse_args()
     pasta_dados = os.path.join(os.path.dirname(__file__), '..', 'data', 'gestures')
     manifesto = os.path.join(os.path.dirname(__file__), '..', 'data', 'metadata', 'coletas.jsonl')
     pasta_modelos = os.path.join(os.path.dirname(__file__), '..', 'models')
@@ -165,6 +183,9 @@ def main():
     classificador.salvar(caminho_modelo)
 
     print(f"\n🎉 Pronto! Acurácia {criterio_metrica} estimada: {acuracia*100:.1f}%")
+    if args.saida:
+        salvar_resumo_treino(args.saida, acuracia, criterio_metrica, y, len(X))
+        print(f"[OK] Resumo salvo em: {os.path.abspath(args.saida)}")
     print(f"   Para usar: python main.py")
 
 

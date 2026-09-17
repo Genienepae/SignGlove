@@ -1,0 +1,20 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from libras_tcc.training.treinar_modelo import salvar_resumo_treino
+
+
+class ResumoTreinoTests(unittest.TestCase):
+    def test_salva_metricas_principais(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            arquivo = Path(pasta) / 'reports' / 'treino.json'
+            salvar_resumo_treino(arquivo, 0.875, 'por amostra', ['B', 'A', 'A'], 3)
+            resultado = json.loads(arquivo.read_text(encoding='utf-8'))
+            self.assertEqual(resultado, {
+                'acuracia': 0.875,
+                'criterio_metrica': 'por amostra',
+                'gestos': ['A', 'B'],
+                'amostras': 3,
+            })

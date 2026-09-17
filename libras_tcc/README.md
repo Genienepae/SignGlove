@@ -86,6 +86,12 @@ python training/coletar_dados.py --gesto D --amostras 200 --participante P01 --s
 ```bash
 python training/treinar_modelo.py
 ```
+
+Para salvar a métrica principal em JSON:
+
+```powershell
+python training/treinar_modelo.py --saida reports/treino.json
+```
 Isso exibe acurácia, precisão e recall por gesto. Com os dados atuais, são
 estimativas exploratórias por amostra, não uma avaliação em pessoas novas.
 
