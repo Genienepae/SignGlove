@@ -17,6 +17,7 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from core.classifier import ClassificadorGestos
+from core.avaliacao import carregar_dataset_por_participante, avaliar_svm_por_participante
 
 # Sklearn para métricas de avaliação
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -55,7 +56,7 @@ def carregar_dataset(pasta_dados: str):
     return np.array(X, dtype=np.float32), y
 
 
-def avaliar_modelo(classificador, X, y):
+def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
     """
     Avalia o modelo com validação cruzada e exibe métricas detalhadas.
     Isso é essencial para o TCC: mostra que o sistema foi avaliado corretamente.
@@ -63,6 +64,28 @@ def avaliar_modelo(classificador, X, y):
     print("=" * 55)
     print("📊 AVALIAÇÃO DO MODELO")
     print("=" * 55)
+
+    try:
+        x_grupo, y_grupo, grupos = carregar_dataset_por_participante(pasta_dados, manifesto)
+        resultado = avaliar_svm_por_participante(x_grupo, y_grupo, grupos)
+        print("\nAvaliação por participante:")
+        print(f"   Participantes: {', '.join(resultado['participantes'])}")
+        print(f"   Acurácia: {resultado['acuracia'] * 100:.1f}%")
+        print(f"   F1 macro: {resultado['f1_macro'] * 100:.1f}%")
+        for gesto, metricas in resultado['por_gesto'].items():
+            print(f"   {gesto}: precisão {metricas['precisao'] * 100:.1f}% | "
+                  f"recall {metricas['recall'] * 100:.1f}% | F1 {metricas['f1'] * 100:.1f}%")
+        return resultado['acuracia'], 'por participante'
+    except ValueError as erro:
+        motivos_esperados = (
+            'Nenhum manifesto de coleta foi encontrado.',
+            'Colete todos os gestos com pelo menos 2 participantes para avaliar por pessoa.',
+            'O manifesto não possui lotes de amostras.',
+        )
+        if str(erro) not in motivos_esperados:
+            raise
+        print('\nAviso: ainda não há cobertura suficiente para avaliar por participante.')
+        print('A métrica abaixo é por amostra e não mede pessoas novas.')
 
     # Divide em treino (80%) e teste (20%)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -101,11 +124,12 @@ def avaliar_modelo(classificador, X, y):
     print(f"   Acurácia por fold: {[f'{s*100:.1f}%' for s in scores]}")
     print(f"   Média: {scores.mean()*100:.1f}% ± {scores.std()*100:.1f}%")
 
-    return acuracia
+    return acuracia, 'por amostra'
 
 
 def main():
     pasta_dados = os.path.join(os.path.dirname(__file__), '..', 'data', 'gestures')
+    manifesto = os.path.join(os.path.dirname(__file__), '..', 'data', 'metadata', 'coletas.jsonl')
     pasta_modelos = os.path.join(os.path.dirname(__file__), '..', 'models')
     os.makedirs(pasta_modelos, exist_ok=True)
 
@@ -120,7 +144,7 @@ def main():
         buffer_frames=8
     )
 
-    acuracia = avaliar_modelo(classificador, X, y)
+    acuracia, criterio_metrica = avaliar_modelo(classificador, X, y, pasta_dados, manifesto)
 
     # Re-treina com TODOS os dados para salvar o modelo final
     print("\n🔁 Retreinando com 100% dos dados para o modelo final...")
@@ -130,7 +154,7 @@ def main():
     caminho_modelo = os.path.join(pasta_modelos, 'modelo_libras.pkl')
     classificador.salvar(caminho_modelo)
 
-    print(f"\n🎉 Pronto! Acurácia final estimada: {acuracia*100:.1f}%")
+    print(f"\n🎉 Pronto! Acurácia {criterio_metrica} estimada: {acuracia*100:.1f}%")
     print(f"   Para usar: python main.py")
 
 
