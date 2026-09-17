@@ -101,6 +101,19 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
         self.assertEqual(classificador.algoritmo, 'SVM')
         self.assertEqual(classificador.confianca_minima, 0.8)
 
+    def test_carregar_limpa_buffer_do_modelo_anterior(self):
+        original = self.criar_classificador(['A'] * 8)
+        with tempfile.TemporaryDirectory() as pasta:
+            caminho = Path(pasta) / 'modelo.pkl'
+            with caminho.open('wb') as arquivo:
+                pickle.dump({'modelo': ModeloFixo(), 'le': original.label_encoder}, arquivo)
+            classificador = self.criar_classificador(['A'] * 8)
+            for _ in range(8):
+                self.prever(classificador)
+            self.assertEqual(len(classificador._buffer), 8)
+            classificador.carregar(str(caminho))
+            self.assertEqual(len(classificador._buffer), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

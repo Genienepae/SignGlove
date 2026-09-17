@@ -166,6 +166,8 @@ class ClassificadorGestos:
         if not os.path.exists(caminho):
             raise FileNotFoundError(f"Arquivo não encontrado: {caminho}")
 
+        # Um modelo novo não pode herdar confirmações do modelo anterior.
+        self.resetar_buffer()
         with open(caminho, 'rb') as f:
             dados = pickle.load(f)
 
