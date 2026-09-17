@@ -124,6 +124,15 @@ Ao encerrar o desafio, o sistema salva em `data/metadata/praticas.jsonl` somente
 o código anônimo do participante, início, duração, acertos e erros. Não salva imagens,
 vídeos ou nomes.
 
+Para resumir as sessões já registradas, sem abrir a câmera:
+
+```bash
+python training/resumo_praticas.py
+```
+
+O resumo descreve o uso do protótipo; ele não comprova ganho de aprendizagem sem
+um protocolo de avaliação definido com o orientador.
+
 ### 4. Executar o reconhecimento em tempo real
 ```bash
 python main.py
