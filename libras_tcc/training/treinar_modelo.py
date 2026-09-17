@@ -111,7 +111,10 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
             'f1_macro': resultado['f1_macro'],
             'criterio_metrica': 'por participante',
             'por_gesto': resultado['por_gesto'],
-            'matriz_confusao': resultado['matriz_confusao'],
+            'matriz_confusao': {
+                'rotulos': resultado['gestos'],
+                'valores': resultado['matriz_confusao'],
+            },
         }
     except ValueError as erro:
         motivos_esperados = (
