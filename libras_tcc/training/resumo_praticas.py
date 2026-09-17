@@ -27,7 +27,8 @@ def main():
     for codigo, dados in sorted(resumo['participantes'].items()):
         minutos, segundos = divmod(dados['duracao_segundos'], 60)
         print(f"{codigo:12} | {dados['sessoes']:8} | {dados['acertos']:7} | "
-              f"{dados['erros']:5} | {minutos}m {segundos:02}s")
+              f"{dados['erros']:5} | {dados['taxa_acerto'] * 100:4.1f}% | "
+              f"{minutos}m {segundos:02}s")
     return 0
 
 

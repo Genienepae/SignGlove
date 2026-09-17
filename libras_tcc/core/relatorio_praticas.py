@@ -32,4 +32,8 @@ def resumir_praticas(arquivo: str | Path) -> dict:
         total['erros'] += erros
         total['duracao_segundos'] += duracao
 
+    for total in participantes.values():
+        tentativas = total['acertos'] + total['erros']
+        total['taxa_acerto'] = (total['acertos'] / tentativas) if tentativas else 0.0
+
     return {'sessoes': sum(item['sessoes'] for item in participantes.values()), 'participantes': participantes}

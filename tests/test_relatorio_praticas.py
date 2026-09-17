@@ -21,6 +21,7 @@ class RelatorioPraticasTests(unittest.TestCase):
             self.assertEqual(resumo['sessoes'], 3)
             self.assertEqual(resumo['participantes']['P01'], {
                 'sessoes': 2, 'acertos': 5, 'erros': 3, 'duracao_segundos': 50,
+                'taxa_acerto': 0.625,
             })
 
     def test_sem_arquivo_retorna_resumo_vazio(self):
