@@ -437,7 +437,7 @@ class TreinadorLibras:
         self.lbl_imagem_alfabeto.config(image=self._imagem_alfabeto_tk)
 
     def _mostrar_referencia_teste(self):
-        """Exibe o alfabeto ao lado da câmera somente durante teste/desafio."""
+        """Exibe o alfabeto ao lado da câmera durante teste ou gravação."""
         self.painel_referencia.grid()
 
     def _ocultar_referencia_teste(self):
@@ -785,6 +785,7 @@ class TreinadorLibras:
             self.btn_gravar.config(text='● GRAVAR GESTO', bg=GREEN)
             self.status_bar.config(text='GRAVAÇÃO CANCELADA', fg=MUTED)
             self._set_progresso(0)
+            self._ocultar_referencia_teste()
         else:
             # Inicia contagem regressiva
             try:
@@ -799,6 +800,7 @@ class TreinadorLibras:
             self.inicio_coleta_atual = datetime.now(timezone.utc).isoformat()
             self.modo = 'contagem'
             self._espaco_flag = False
+            self._mostrar_referencia_teste()
             self.btn_gravar.config(text='■ CANCELAR', bg=RED)
             self.status_bar.config(
                 text=f'Prepare-se para gravar "{nome}"...', fg=YELLOW)
@@ -834,6 +836,7 @@ class TreinadorLibras:
         self.modo = 'idle'
         self.btn_gravar.config(text='● GRAVAR GESTO', bg=GREEN)
         self._set_progresso(0)
+        self._ocultar_referencia_teste()
         self._atualizar_lista_gestos()
         self.status_bar.config(
             text=f'✓  {n} amostras de "{nome}" salvas para {self.participante_atual}/{self.sessao_atual}!', fg=GREEN)
