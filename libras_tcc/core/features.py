@@ -37,8 +37,15 @@ def extrair_features(landmarks_raw: np.ndarray) -> np.ndarray:
     if landmarks_raw is None:
         return None
 
+    try:
+        landmarks = np.asarray(landmarks_raw, dtype=np.float32).reshape(-1)
+    except (TypeError, ValueError):
+        return None
+    if landmarks.size != 63 or not np.isfinite(landmarks).all():
+        return None
+
     # Reshape: (63,) → (21, 3)
-    pontos = landmarks_raw.reshape(21, 3)
+    pontos = landmarks.reshape(21, 3)
 
     # --- Passo 1: centralizar em relação ao pulso ---
     pulso = pontos[WRIST].copy()
