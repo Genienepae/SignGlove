@@ -91,29 +91,35 @@ def desenhar_hud(frame, gesto, confianca, confirmado, texto_acumulado, fps):
     return frame
 
 
-def main(camera_index=0):
+def main(camera_index=0, check_only=False):
     # Verifica se o modelo foi treinado
     if not os.path.exists(CAMINHO_MODELO):
-        print(f"❌ Modelo não encontrado: {CAMINHO_MODELO}")
+        print(f"[ERRO] Modelo não encontrado: {CAMINHO_MODELO}")
         print("   Execute primeiro:")
         print("     python training/coletar_dados.py --gesto A")
         print("     python training/treinar_modelo.py")
         sys.exit(1)
 
-    print("🚀 Iniciando sistema de reconhecimento de Libras...")
+    print("[INICIO] Sistema de reconhecimento de Libras")
 
-    # Inicializa componentes
+    # Carrega o classificador antes do detector para permitir --check sem
+    # inicializar MediaPipe.
+    classificador = ClassificadorGestos(
+        confianca_minima=CONFIANCA_MINIMA,
+        buffer_frames=BUFFER_FRAMES
+    )
+    classificador.carregar(CAMINHO_MODELO)
+
+    if check_only:
+        print(f"[OK] Modelo pronto para uso: {list(classificador.label_encoder.classes_)}")
+        return
+
     detector = HandDetector(
         max_hands=1,
         min_detection_confidence=0.8,
         min_tracking_confidence=0.7,
         model_complexity=0,
     )
-    classificador = ClassificadorGestos(
-        confianca_minima=CONFIANCA_MINIMA,
-        buffer_frames=BUFFER_FRAMES
-    )
-    classificador.carregar(CAMINHO_MODELO)
 
     cap = cv2.VideoCapture(camera_index)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, LARGURA_CAMERA)
@@ -121,7 +127,7 @@ def main(camera_index=0):
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     if not cap.isOpened():
-        print(f"❌ Erro: câmera {camera_index} não encontrada ou ocupada por outro programa.")
+        print(f"[ERRO] Câmera {camera_index} não encontrada ou ocupada por outro programa.")
         sys.exit(1)
 
     texto_acumulado = ""
@@ -131,7 +137,7 @@ def main(camera_index=0):
     fps_tempo = time.time()
     fps_atual = 0
 
-    print("✅ Sistema pronto! Pressione Q para sair.\n")
+    print("[OK] Sistema pronto! Pressione Q para sair.\n")
 
     while True:
         ret, frame = cap.read()
@@ -167,7 +173,7 @@ def main(camera_index=0):
                 texto_acumulado += gesto_atual
                 ultimo_confirmado = gesto_atual
                 ultimo_tempo_confirmacao = agora
-                print(f"✅ Reconhecido: {gesto_atual} ({confianca_atual*100:.0f}%)")
+                print(f"[OK] Reconhecido: {gesto_atual} ({confianca_atual*100:.0f}%)")
         else:
             # Sem mão → reseta para evitar acúmulo indevido no buffer
             classificador.resetar_buffer()
@@ -186,7 +192,7 @@ def main(camera_index=0):
             break
         elif tecla == ord('c'):
             texto_acumulado = ""
-            print("🗑️  Texto limpo.")
+            print("[OK] Texto limpo.")
         elif tecla == ord(' '):
             texto_acumulado += " "
 
@@ -194,13 +200,15 @@ def main(camera_index=0):
     cap.release()
     cv2.destroyAllWindows()
     detector.release()
-    print(f"\n📝 Texto final reconhecido: '{texto_acumulado}'")
-    print("👋 Encerrando sistema.")
+    print(f"\n[RESULTADO] Texto final reconhecido: '{texto_acumulado}'")
+    print("[FIM] Encerrando sistema.")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reconhecimento de configurações de mão.')
     parser.add_argument('--camera', type=int, default=0,
                         help='Índice da câmera a usar (padrão: 0). Ex.: --camera 1')
+    parser.add_argument('--check', action='store_true',
+                        help='Valida o modelo sem abrir a câmera')
     args = parser.parse_args()
-    main(args.camera)
+    main(args.camera, args.check)

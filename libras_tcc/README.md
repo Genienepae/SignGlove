@@ -184,6 +184,12 @@ Se a câmera do celular aparecer como outro dispositivo, experimente:
 python main.py --camera 1
 ```
 
+Para verificar o modelo sem abrir nenhuma câmera:
+
+```bash
+python main.py --check
+```
+
 ## 🧠 Como Funciona — Explicado para o TCC
 
 ### Os 21 Landmarks do MediaPipe
