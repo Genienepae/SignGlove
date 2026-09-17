@@ -112,6 +112,12 @@ def main(camera_index=0, check_only=False):
     classificador.carregar(CAMINHO_MODELO)
 
     if check_only:
+        dimensao = getattr(classificador.modelo, 'n_features_in_', None)
+        if dimensao is not None and dimensao != 73:
+            print(f"[ERRO] Modelo espera {dimensao} features; o projeto usa 73")
+            return 1
+        if dimensao is not None:
+            print(f"[OK] Dimensão de entrada compatível: {dimensao} features")
         print(f"[OK] Modelo pronto para uso: {list(classificador.label_encoder.classes_)}")
         return
 
@@ -226,4 +232,4 @@ if __name__ == '__main__':
     parser.add_argument('--check', action='store_true',
                         help='Valida o modelo sem abrir a câmera')
     args = parser.parse_args()
-    main(args.camera, args.check)
+    raise SystemExit(main(args.camera, args.check))
