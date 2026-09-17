@@ -72,6 +72,7 @@ INTERVALO_UI_MS = 50  # 20 FPS: mantém controles responsivos em computadores es
 # O detector é a parte mais pesada do treinador. A captura continua lendo
 # frames para evitar atraso, mas o MediaPipe é executado no máximo 20 vezes/s.
 INTERVALO_DETECCAO_S = 0.05
+CONFIANCA_TESTE_MINIMA = 0.70
 os.makedirs(DIR_DADOS, exist_ok=True)
 os.makedirs(DIR_MODEL, exist_ok=True)
 os.makedirs(DIR_REFERENCIAS, exist_ok=True)
@@ -698,7 +699,8 @@ class TreinadorLibras:
                         conf  = probs[idx]
                         pred  = self.le.inverse_transform([idx])[0]
 
-                        self._buf_teste.append(pred if conf >= 0.70 else None)
+                        self._buf_teste.append(
+                            pred if conf >= CONFIANCA_TESTE_MINIMA else None)
 
                         validos = [x for x in self._buf_teste if x]
                         if validos:
@@ -706,7 +708,7 @@ class TreinadorLibras:
                             if cnt / len(self._buf_teste) >= 0.6:
                                 self._resultado_pendente = (mais, conf)
 
-                        if conf >= 0.70:
+                        if conf >= CONFIANCA_TESTE_MINIMA:
                             cv2.putText(frame_ann, pred, (12, h - 50),
                                         cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 230, 118), 3)
                             cv2.putText(frame_ann, f'{conf*100:.0f}%', (12, h - 20),

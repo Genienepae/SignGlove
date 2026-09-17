@@ -113,6 +113,8 @@ o modelo leve do MediaPipe. Ao clicar em **ABRIR ALFABETO OFICIAL**, abre a
 publicação de referência do INES no navegador para consulta lado a lado. Depois
 de coletar os gestos, o programa compara SVM e floresta aleatória com validação
 cruzada e usa o melhor candidato para aquele conjunto.
+No modo teste, previsões abaixo de 70% são tratadas como dúvida e não entram na
+confirmação temporal.
 
 A referência é material de consulta; valide a seleção de sinais e qualquer
 orientação de prática com uma pessoa formada em Libras.
