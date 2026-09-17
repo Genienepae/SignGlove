@@ -19,13 +19,15 @@ o protótipo; não é testar proficiência em Libras.
 ## Para cada participante
 
 1. Informe o código da pessoa no campo **CÓDIGO DO PARTICIPANTE**.
-2. Grave cada gesto em uma sessão separada. Faça pequenas mudanças naturais de
+2. Use `S01` para todas as letras gravadas no mesmo encontro. Mude para `S02`
+   em outro dia, local ou condição de iluminação.
+3. Grave cada gesto em uma sessão separada. Faça pequenas mudanças naturais de
    distância e orientação, sem mudar a configuração que está sendo ensinada.
-3. Registre a mesma lista de gestos para cada pessoa. Isso é necessário para a
+4. Registre a mesma lista de gestos para cada pessoa. Isso é necessário para a
    validação por participante funcionar.
-4. Faça pausas curtas entre gestos e, se possível, colete uma segunda sessão em
+5. Faça pausas curtas entre gestos e, se possível, colete uma segunda sessão em
    outro dia ou com outra iluminação. Anote essa condição fora do aplicativo.
-5. Não misture duas pessoas com o mesmo código e não reutilize um código em uma
+6. Não misture duas pessoas com o mesmo código e não reutilize um código em uma
    pessoa diferente.
 
 ## Quantidade inicial sugerida

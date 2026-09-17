@@ -4,6 +4,7 @@ from pathlib import Path
 
 from libras_tcc.core.coletas import (
     normalizar_codigo_participante,
+    normalizar_codigo_sessao,
     registrar_lote,
     remover_registros_do_gesto,
 )
@@ -12,6 +13,7 @@ from libras_tcc.core.coletas import (
 class MetadadosColetaTests(unittest.TestCase):
     def test_normaliza_codigo_anonimo(self):
         self.assertEqual(normalizar_codigo_participante(' p-01 '), 'P-01')
+        self.assertEqual(normalizar_codigo_sessao(' s-01 '), 'S-01')
 
     def test_rejeita_nome_com_espaco(self):
         with self.assertRaises(ValueError):
@@ -20,9 +22,10 @@ class MetadadosColetaTests(unittest.TestCase):
     def test_registra_intervalo_e_remove_por_gesto(self):
         with tempfile.TemporaryDirectory() as pasta:
             manifesto = Path(pasta) / 'coletas.jsonl'
-            registro = registrar_lote(manifesto, 'P01', 'A', 'A.json', 10, 3)
+            registro = registrar_lote(manifesto, 'P01', 'A', 'A.json', 10, 3, sessao='S02')
             registrar_lote(manifesto, 'P02', 'B', 'B.json', 0, 2)
             self.assertEqual(registro['indice_fim'], 12)
+            self.assertEqual(registro['sessao'], 'S02')
 
             remover_registros_do_gesto(manifesto, 'A.json')
             texto = manifesto.read_text(encoding='utf-8')

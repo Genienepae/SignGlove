@@ -41,7 +41,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
-from core.coletas import registrar_lote, remover_registros_do_gesto, normalizar_codigo_participante
+from core.coletas import (
+    registrar_lote, remover_registros_do_gesto,
+    normalizar_codigo_participante, normalizar_codigo_sessao,
+)
 from core.praticas import registrar_pratica
 from core.avaliacao import carregar_dataset_por_participante, divisao_por_participante_disponivel
 
@@ -162,7 +165,7 @@ class TreinadorLibras:
             except Exception:
                 pass
 
-    def _salvar_gesto(self, nome, lista_features, participante):
+    def _salvar_gesto(self, nome, lista_features, participante, sessao):
         path = os.path.join(DIR_DADOS, f'{nome}.json')
         existente = []
         if os.path.exists(path):
@@ -175,7 +178,7 @@ class TreinadorLibras:
         self.amostras[nome] = [np.array(d) for d in existente]
         registrar_lote(
             PATH_MANIFESTO_COLETAS, participante, nome, f'{nome}.json',
-            indice_inicio, len(lista_features), self.inicio_coleta_atual)
+            indice_inicio, len(lista_features), sessao, self.inicio_coleta_atual)
 
     # ── UI ───────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -299,6 +302,18 @@ class TreinadorLibras:
         self.entry_participante.pack(fill='x', ipady=5, padx=2, pady=2)
         self.entry_participante.insert(0, 'P01')
         tk.Label(sf, text='Use um código anônimo, ex.: P01. Não escreva nome completo.',
+                 font=('Courier', 7), bg=SURFACE, fg=MUTED).pack(anchor='w', padx=16, pady=(2, 0))
+
+        tk.Label(sf, text='CÓDIGO DA SESSÃO', font=('Courier', 8, 'bold'),
+                 bg=SURFACE, fg=MUTED).pack(anchor='w', **pad, pady=(8, 4))
+        sessao_frame = tk.Frame(sf, bg=BORDER, padx=1, pady=1)
+        sessao_frame.pack(fill='x', padx=16)
+        self.entry_sessao = tk.Entry(
+            sessao_frame, font=('Courier', 11, 'bold'), bg=BG, fg=GREEN,
+            insertbackground=GREEN, relief='flat')
+        self.entry_sessao.pack(fill='x', ipady=5, padx=2, pady=2)
+        self.entry_sessao.insert(0, 'S01')
+        tk.Label(sf, text='Troque para S02 quando gravar em outro dia ou condição.',
                  font=('Courier', 7), bg=SURFACE, fg=MUTED).pack(anchor='w', padx=16, pady=(2, 0))
 
         # ─ META DE AMOSTRAS ──────────────────────────────────────────────
@@ -761,11 +776,13 @@ class TreinadorLibras:
             # Inicia contagem regressiva
             try:
                 participante = normalizar_codigo_participante(self.entry_participante.get())
+                sessao = normalizar_codigo_sessao(self.entry_sessao.get())
             except ValueError as erro:
-                messagebox.showwarning('Código do participante', str(erro))
+                messagebox.showwarning('Código de coleta', str(erro))
                 return
             self.gesto_atual = nome
             self.participante_atual = participante
+            self.sessao_atual = sessao
             self.inicio_coleta_atual = datetime.now(timezone.utc).isoformat()
             self.modo = 'contagem'
             self._espaco_flag = False
@@ -797,7 +814,7 @@ class TreinadorLibras:
 
     def _finalizar_gravacao(self, nome, amostras):
         """Salva as amostras; o loop do Tk fará a atualização visual."""
-        self._salvar_gesto(nome, amostras, self.participante_atual)
+        self._salvar_gesto(nome, amostras, self.participante_atual, self.sessao_atual)
         self._gravacao_concluida = (nome, len(amostras))
 
     def _pos_gravacao(self, nome, n):
@@ -806,7 +823,7 @@ class TreinadorLibras:
         self._set_progresso(0)
         self._atualizar_lista_gestos()
         self.status_bar.config(
-            text=f'✓  {n} amostras de "{nome}" salvas para {self.participante_atual}!', fg=GREEN)
+            text=f'✓  {n} amostras de "{nome}" salvas para {self.participante_atual}/{self.sessao_atual}!', fg=GREEN)
 
     # ── TREINO ───────────────────────────────────────────────────────────
     def _treinar(self):
