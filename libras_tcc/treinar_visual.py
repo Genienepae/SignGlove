@@ -42,6 +42,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
 from core.coletas import registrar_lote, remover_registros_do_gesto, normalizar_codigo_participante
+from core.praticas import registrar_pratica
 
 # sklearn
 from sklearn.svm import SVC
@@ -54,6 +55,7 @@ from sklearn.ensemble import RandomForestClassifier
 # ── PATHS ──────────────────────────────────────────────────────────────────
 DIR_DADOS  = os.path.join(os.path.dirname(__file__), 'data', 'gestures')
 PATH_MANIFESTO_COLETAS = os.path.join(os.path.dirname(__file__), 'data', 'metadata', 'coletas.jsonl')
+PATH_MANIFESTO_PRATICAS = os.path.join(os.path.dirname(__file__), 'data', 'metadata', 'praticas.jsonl')
 DIR_MODEL  = os.path.join(os.path.dirname(__file__), 'models')
 DIR_REFERENCIAS = os.path.join(os.path.dirname(__file__), 'assets', 'referencias')
 PATH_MODEL = os.path.join(DIR_MODEL, 'modelo_libras.pkl')
@@ -115,6 +117,8 @@ class TreinadorLibras:
         self.modo_desafio = False
         self.desafio_atual = None
         self.desafios_acertos = 0
+        self.inicio_desafio = None
+        self.participante_desafio = None
         self._ultimo_frame = None
         self._frame_lock = threading.Lock()
         self._progresso_pendente = None
@@ -905,15 +909,26 @@ class TreinadorLibras:
 
     # ── TESTE ─────────────────────────────────────────────────────────────
     def _parar_teste(self):
+        resumo_desafio = None
+        if self.modo_desafio and self.inicio_desafio:
+            registro = registrar_pratica(
+                PATH_MANIFESTO_PRATICAS, self.participante_desafio,
+                self.inicio_desafio, self.desafios_acertos)
+            resumo_desafio = (
+                f'DESAFIO SALVO — {registro["acertos"]} acertos em '
+                f'{registro["duracao_segundos"]}s ({registro["participante"]})')
         self.modo = 'idle'
         self.modo_desafio = False
         self.desafio_atual = None
+        self.inicio_desafio = None
+        self.participante_desafio = None
         self.btn_testar.config(text='▶ TESTAR EM TEMPO REAL')
         self.btn_desafio.config(text='🎯 INICIAR DESAFIO')
         self.lbl_desafio.config(text='Desafio: —', fg=MUTED)
         self.lbl_resultado.config(text='—')
         self.lbl_confianca.config(text='')
-        self.status_bar.config(text='PRONTO', fg=MUTED)
+        self.status_bar.config(text=resumo_desafio or 'PRONTO',
+                               fg=GREEN if resumo_desafio else MUTED)
 
     def _sortear_desafio(self):
         opcoes = list(self.le.classes_)
@@ -938,10 +953,17 @@ class TreinadorLibras:
             self._toggle_gravacao()
         if self.modo == 'testando':
             self._parar_teste()
+        try:
+            participante = normalizar_codigo_participante(self.entry_participante.get())
+        except ValueError as erro:
+            messagebox.showwarning('Código do participante', str(erro))
+            return
         self._abrir_pdf_referencia()
         self.modo = 'testando'
         self.modo_desafio = True
         self.desafios_acertos = 0
+        self.inicio_desafio = datetime.now(timezone.utc).isoformat()
+        self.participante_desafio = participante
         self.btn_testar.config(text='■ PARAR TESTE')
         self.btn_desafio.config(text='■ PARAR DESAFIO')
         self._sortear_desafio()

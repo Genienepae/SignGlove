@@ -119,6 +119,9 @@ Depois de treinar a IA, clique em **INICIAR DESAFIO**. O sistema abre o PDF de
 referência, sorteia uma das letras treinadas e contabiliza o acerto apenas após a
 confirmação temporal da câmera. A pontuação serve para acompanhar a prática na
 sessão; não é uma avaliação linguística nem uma medida de aprendizagem validada.
+Ao encerrar o desafio, o sistema salva em `data/metadata/praticas.jsonl` somente
+o código anônimo do participante, início, duração e acertos. Não salva imagens,
+vídeos ou nomes.
 
 ### 4. Executar o reconhecimento em tempo real
 ```bash
