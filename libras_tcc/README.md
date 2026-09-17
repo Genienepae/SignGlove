@@ -95,6 +95,12 @@ estimativas exploratórias por amostra, não uma avaliação em pessoas novas.
 python treinar_visual.py
 ```
 
+Para usar a câmera do celular quando ela aparecer como outro dispositivo:
+
+```bash
+python treinar_visual.py --camera 1
+```
+
 O treinador exibe a webcam em até 20 FPS para manter a janela responsiva e usa
 o modelo leve do MediaPipe. Ao clicar em **ABRIR ALFABETO OFICIAL**, abre a
 publicação de referência do INES no navegador para consulta lado a lado. Depois

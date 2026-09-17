@@ -22,6 +22,7 @@ Requisitos:
 """
 
 import cv2
+import argparse
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import threading
@@ -93,13 +94,14 @@ ALFABETO = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 class TreinadorLibras:
     """Aplicação principal — janela única com webcam + controles."""
 
-    def __init__(self):
+    def __init__(self, camera_index=0):
         self.root = tk.Tk()
         self.root.title('🤟 Treinador de Libras — IA')
         self.root.configure(bg=BG)
         self.root.resizable(True, True)
         self.root.minsize(1100, 680)
         self.root.geometry('1120x800+0+80')
+        self.camera_index = camera_index
 
         # Estado
         self.modo        = 'idle'       # idle | contagem | gravando | testando
@@ -552,10 +554,18 @@ class TreinadorLibras:
     # ── CÂMERA ───────────────────────────────────────────────────────────
     def _iniciar_camera(self):
         self.detector = HandDetector(min_detection_confidence=0.75, model_complexity=0)
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(self.camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        if not self.cap.isOpened():
+            self.status_bar.config(
+                text=f'CÂMERA {self.camera_index} NÃO ENCONTRADA OU OCUPADA', fg=RED)
+            messagebox.showerror(
+                'Câmera indisponível',
+                f'Não foi possível abrir a câmera {self.camera_index}.\n\n'
+                'Feche outros programas que usam a câmera ou execute com outro índice.')
+            return
         self.rodando = True
         self._thread_cam = threading.Thread(target=self._loop_camera, daemon=True)
         self._thread_cam.start()
@@ -940,7 +950,7 @@ class TreinadorLibras:
             f'✅ A IA foi treinada com sucesso!\n\n'
             f'   IA selecionada: {nome_modelo}\n'
             f'   Gestos: {list(self.le.classes_)}\n'
-            f'   Acurácia {criterio_metrica}: {acc*100:.1f}%\n\n'
+            f'   Acurácia {criterio_metrica}: {acc*100:.1f}%\n\n' +
             ('Essa estimativa separa pessoas inteiras.\n'
              if criterio_metrica == 'por participante' else
              'Essa estimativa não mede pessoas novas.\n') +
@@ -1068,4 +1078,8 @@ if __name__ == '__main__':
         print('   Depois execute:  python treinar_visual.py\n')
         sys.exit(1)
 
-    TreinadorLibras()
+    parser = argparse.ArgumentParser(description='Treinador visual de configurações de mão.')
+    parser.add_argument('--camera', type=int, default=0,
+                        help='Índice da câmera a usar (padrão: 0). Ex.: --camera 1')
+    args = parser.parse_args()
+    TreinadorLibras(args.camera)
