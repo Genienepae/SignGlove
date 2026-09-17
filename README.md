@@ -1,5 +1,7 @@
 # SignGlove
 
+[![Testes](https://github.com/Genienepae/SignGlove/actions/workflows/testes.yml/badge.svg)](https://github.com/Genienepae/SignGlove/actions/workflows/testes.yml)
+
 Protótipo de reconhecimento de configurações de mão pela webcam, desenvolvido
 como base para um TCC de Desenvolvimento de Sistemas.
 
