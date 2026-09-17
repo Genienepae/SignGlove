@@ -56,13 +56,26 @@ def carregar_dataset_por_participante(pasta_amostras: str | Path, manifesto: str
     return np.asarray(features, dtype=float), np.asarray(classes), np.asarray(grupos)
 
 
+def divisao_por_participante_disponivel(classes, grupos) -> bool:
+    """Confirma que cada treino mantém todas as classes necessárias."""
+    participantes = np.unique(grupos)
+    classes = np.asarray(classes)
+    if len(participantes) < 2 or len(np.unique(classes)) < 2:
+        return False
+    todas_classes = set(classes)
+    divisao = GroupKFold(n_splits=min(5, len(participantes)))
+    for treino, _ in divisao.split(np.zeros(len(classes)), classes, grupos):
+        if set(classes[treino]) != todas_classes:
+            return False
+    return True
+
+
 def avaliar_svm_por_participante(features, classes, grupos) -> dict:
     """Mede uma SVM em divisões que nunca misturam a mesma pessoa."""
     participantes = np.unique(grupos)
-    if len(participantes) < 2:
-        raise ValueError('Colete dados de pelo menos 2 participantes para avaliar por pessoa.')
-    if len(np.unique(classes)) < 2:
-        raise ValueError('São necessários pelo menos 2 gestos para a avaliação.')
+    if not divisao_por_participante_disponivel(classes, grupos):
+        raise ValueError(
+            'Colete todos os gestos com pelo menos 2 participantes para avaliar por pessoa.')
 
     divisao = GroupKFold(n_splits=min(5, len(participantes)))
     previsoes = np.empty(len(classes), dtype=classes.dtype)

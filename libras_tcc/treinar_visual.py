@@ -43,13 +43,14 @@ from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
 from core.coletas import registrar_lote, remover_registros_do_gesto, normalizar_codigo_participante
 from core.praticas import registrar_pratica
+from core.avaliacao import carregar_dataset_por_participante, divisao_por_participante_disponivel
 
 # sklearn
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold, GroupKFold, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 
 # ── PATHS ──────────────────────────────────────────────────────────────────
@@ -352,8 +353,9 @@ class TreinadorLibras:
         # barra de acurácia
         acc_frame = tk.Frame(sf, bg=SURFACE)
         acc_frame.pack(fill='x', padx=16, pady=(6, 0))
-        tk.Label(acc_frame, text='Acurácia por amostra:', font=('Courier', 9),
-                 bg=SURFACE, fg=MUTED).pack(side='left')
+        self.lbl_tipo_metrica = tk.Label(acc_frame, text='Acurácia por amostra:', font=('Courier', 9),
+                                         bg=SURFACE, fg=MUTED)
+        self.lbl_tipo_metrica.pack(side='left')
         self.lbl_acc = tk.Label(acc_frame, text='—', font=('Courier', 9, 'bold'),
                                 bg=SURFACE, fg=GREEN)
         self.lbl_acc.pack(side='left', padx=8)
@@ -840,12 +842,6 @@ class TreinadorLibras:
             if menor_classe < 2:
                 raise ValueError('Cada gesto precisa de pelo menos 2 amostras.')
 
-            # Avaliamos candidatos nos dados originais. Variações artificiais só
-            # entram após a avaliação, para não repetir a mesma tentativa no treino
-            # e na validação.
-            cv = StratifiedKFold(
-                n_splits=min(5, menor_classe), shuffle=True, random_state=42
-            )
             candidatos = {
                 'SVM': Pipeline([
                 ('sc', StandardScaler()),
@@ -857,8 +853,29 @@ class TreinadorLibras:
                     random_state=42, n_jobs=1
                 ),
             }
+            criterio_metrica = 'por amostra'
+            x_avaliacao, y_avaliacao = X, y_enc
+            grupos_avaliacao = None
+            try:
+                x_grupo, y_grupo, grupos = carregar_dataset_por_participante(
+                    DIR_DADOS, PATH_MANIFESTO_COLETAS)
+                if divisao_por_participante_disponivel(y_grupo, grupos):
+                    le_grupo = LabelEncoder()
+                    x_avaliacao = x_grupo.astype(np.float32)
+                    y_avaliacao = le_grupo.fit_transform(y_grupo)
+                    grupos_avaliacao = grupos
+                    cv = GroupKFold(n_splits=min(5, len(np.unique(grupos))))
+                    criterio_metrica = 'por participante'
+                else:
+                    raise ValueError('Cobertura de participantes ainda insuficiente.')
+            except ValueError:
+                cv = StratifiedKFold(
+                    n_splits=min(5, menor_classe), shuffle=True, random_state=42)
+
             medias = {
-                nome: cross_val_score(modelo, X, y_enc, cv=cv, scoring='accuracy').mean()
+                nome: cross_val_score(
+                    modelo, x_avaliacao, y_avaliacao, cv=cv, groups=grupos_avaliacao,
+                    scoring='accuracy').mean()
                 for nome, modelo in candidatos.items()
             }
             nome_modelo = max(medias, key=medias.get)
@@ -880,32 +897,36 @@ class TreinadorLibras:
                     'le': le,
                     'nome_modelo': nome_modelo,
                     'acuracias_cv': medias,
+                    'criterio_metrica': criterio_metrica,
                 }, f)
 
             self.modelo   = modelo
             self.le       = le
             self.treinado = True
 
-            self.root.after(0, self._pos_treino, acc, len(le.classes_), nome_modelo)
+            self.root.after(0, self._pos_treino, acc, len(le.classes_), nome_modelo, criterio_metrica)
 
         except Exception as e:
             self.root.after(0, messagebox.showerror, 'Erro no treino', str(e))
             self.root.after(0, self.btn_treinar.config,
                             {'text': '🧠 TREINAR IA', 'state': 'normal'})
 
-    def _pos_treino(self, acc, n_classes, nome_modelo):
+    def _pos_treino(self, acc, n_classes, nome_modelo, criterio_metrica):
         self.btn_treinar.config(text='🧠 TREINAR IA', state='normal')
+        self.lbl_tipo_metrica.config(text=f'Acurácia {criterio_metrica}:')
         self.lbl_acc.config(text=f'{acc*100:.1f}%',
                              fg=GREEN if acc >= 0.85 else YELLOW if acc >= 0.70 else RED)
         self.status_bar.config(
-            text=f'✓  {nome_modelo} selecionada!  {n_classes} gestos · Acurácia: {acc*100:.1f}%',
+            text=f'✓  {nome_modelo} selecionada!  {n_classes} gestos · {criterio_metrica}: {acc*100:.1f}%',
             fg=GREEN)
         messagebox.showinfo('Treinamento concluído!',
             f'✅ A IA foi treinada com sucesso!\n\n'
             f'   IA selecionada: {nome_modelo}\n'
             f'   Gestos: {list(self.le.classes_)}\n'
-            f'   Acurácia por amostra: {acc*100:.1f}%\n\n'
-            'Essa estimativa não mede pessoas novas.\n'
+            f'   Acurácia {criterio_metrica}: {acc*100:.1f}%\n\n'
+            ('Essa estimativa separa pessoas inteiras.\n'
+             if criterio_metrica == 'por participante' else
+             'Essa estimativa não mede pessoas novas.\n') +
             'Clique em "▶ TESTAR" para ver funcionando.'
         )
 

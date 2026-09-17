@@ -95,6 +95,11 @@ cruzada e usa o melhor candidato para aquele conjunto.
 A referência é material de consulta; valide a seleção de sinais e qualquer
 orientação de prática com uma pessoa formada em Libras.
 
+Quando o manifesto de coleta tiver os mesmos gestos registrados para pelo menos dois
+participantes, a seleção usa divisões por participante e a tela mostra **acurácia por
+participante**. Sem essa cobertura, mostra **acurácia por amostra**, que não mede
+pessoas novas.
+
 ### Coleta com participantes
 
 Antes de gravar, informe um **código anônimo** de participante, como `P01` ou

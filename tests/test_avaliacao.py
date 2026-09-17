@@ -3,7 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from libras_tcc.core.avaliacao import carregar_dataset_por_participante
+from libras_tcc.core.avaliacao import (
+    carregar_dataset_por_participante,
+    divisao_por_participante_disponivel,
+)
 
 
 class AvaliacaoPorParticipanteTests(unittest.TestCase):
@@ -35,3 +38,9 @@ class AvaliacaoPorParticipanteTests(unittest.TestCase):
 
             with self.assertRaises(ValueError):
                 carregar_dataset_por_participante(raiz, manifesto)
+
+    def test_exige_todos_os_gestos_em_cada_treino(self):
+        self.assertTrue(divisao_por_participante_disponivel(
+            ['A', 'B', 'A', 'B'], ['P01', 'P01', 'P02', 'P02']))
+        self.assertFalse(divisao_por_participante_disponivel(
+            ['A', 'B', 'A'], ['P01', 'P01', 'P02']))
