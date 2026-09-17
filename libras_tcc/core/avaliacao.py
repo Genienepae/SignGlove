@@ -1,0 +1,83 @@
+"""Avaliação que separa participantes inteiros entre treino e teste."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import GroupKFold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+
+def carregar_dataset_por_participante(pasta_amostras: str | Path, manifesto: str | Path):
+    """Monta X, y e grupos apenas dos lotes identificados no manifesto."""
+    pasta_amostras = Path(pasta_amostras)
+    manifesto = Path(manifesto)
+    if not manifesto.exists():
+        raise ValueError('Nenhum manifesto de coleta foi encontrado.')
+
+    arquivos = {}
+    features, classes, grupos = [], [], []
+    for numero_linha, linha in enumerate(manifesto.read_text(encoding='utf-8').splitlines(), start=1):
+        if not linha.strip():
+            continue
+        try:
+            lote = json.loads(linha)
+            nome_arquivo = lote['arquivo_amostras']
+            inicio = int(lote['indice_inicio'])
+            fim = int(lote['indice_fim'])
+            gesto = lote['gesto']
+            participante = lote['participante']
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as erro:
+            raise ValueError(f'Metadado inválido na linha {numero_linha}: {erro}') from erro
+
+        if inicio < 0 or fim < inicio:
+            raise ValueError(f'Intervalo inválido na linha {numero_linha}.')
+        if nome_arquivo not in arquivos:
+            caminho = pasta_amostras / nome_arquivo
+            if not caminho.exists():
+                raise ValueError(f'Amostras não encontradas: {caminho}')
+            arquivos[nome_arquivo] = json.loads(caminho.read_text(encoding='utf-8'))
+        amostras = arquivos[nome_arquivo]
+        if fim >= len(amostras):
+            raise ValueError(f'Intervalo fora do arquivo na linha {numero_linha}.')
+
+        for amostra in amostras[inicio:fim + 1]:
+            features.append(amostra)
+            classes.append(gesto)
+            grupos.append(participante)
+
+    if not features:
+        raise ValueError('O manifesto não possui lotes de amostras.')
+    return np.asarray(features, dtype=float), np.asarray(classes), np.asarray(grupos)
+
+
+def avaliar_svm_por_participante(features, classes, grupos) -> dict:
+    """Mede uma SVM em divisões que nunca misturam a mesma pessoa."""
+    participantes = np.unique(grupos)
+    if len(participantes) < 2:
+        raise ValueError('Colete dados de pelo menos 2 participantes para avaliar por pessoa.')
+    if len(np.unique(classes)) < 2:
+        raise ValueError('São necessários pelo menos 2 gestos para a avaliação.')
+
+    divisao = GroupKFold(n_splits=min(5, len(participantes)))
+    previsoes = np.empty(len(classes), dtype=classes.dtype)
+    for treino, teste in divisao.split(features, classes, grupos):
+        modelo = Pipeline([
+            ('escala', StandardScaler()),
+            ('svm', SVC(kernel='rbf', C=10, gamma='scale')),
+        ])
+        modelo.fit(features[treino], classes[treino])
+        previsoes[teste] = modelo.predict(features[teste])
+
+    return {
+        'participantes': list(participantes),
+        'amostras': int(len(classes)),
+        'gestos': list(np.unique(classes)),
+        'acuracia': float(accuracy_score(classes, previsoes)),
+        'f1_macro': float(f1_score(classes, previsoes, average='macro', zero_division=0)),
+    }

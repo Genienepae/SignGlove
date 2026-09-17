@@ -104,6 +104,15 @@ amostras daquele lote. Esses registros permitem reservar participantes inteiros
 para testes futuros. As amostras antigas não têm esse histórico e não devem ser
 apresentadas como coleta por participante.
 
+Depois de coletar pelo menos dois participantes, execute:
+
+```bash
+python training/avaliar_por_participante.py
+```
+
+O comando mede acurácia e F1 macro reservando pessoas inteiras para teste. Para
+um resultado mais estável, colete os mesmos gestos com pelo menos três pessoas.
+
 ### 4. Executar o reconhecimento em tempo real
 ```bash
 python main.py
