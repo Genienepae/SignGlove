@@ -81,7 +81,8 @@ class ClassificadorGestos:
                     kernel='rbf',
                     probability=True,      # necessário para obter confiança
                     C=10,
-                    gamma='scale'
+                    gamma='scale',
+                    random_state=42
                 ))
             ])
         else:
