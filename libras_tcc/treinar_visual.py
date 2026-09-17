@@ -115,6 +115,7 @@ class TreinadorLibras:
         self.treinado    = False
         self.cap         = None
         self.detector    = None
+        self._thread_cam = None
         self.rodando     = False
         self.meta_amostras = 80         # ← padrão menor = mais rápido
 
@@ -1070,9 +1071,10 @@ class TreinadorLibras:
     # ── ENCERRAR ──────────────────────────────────────────────────────────
     def _fechar(self):
         self.rodando = False
-        time.sleep(0.15)
         if self.cap:
             self.cap.release()
+        if self._thread_cam and self._thread_cam.is_alive():
+            self._thread_cam.join(timeout=1.0)
         if self.detector:
             self.detector.release()
         self.root.destroy()
