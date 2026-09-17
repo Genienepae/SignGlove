@@ -40,7 +40,7 @@ def carregar_dataset(pasta_dados: str):
         print("   Execute primeiro: python training/coletar_dados.py --gesto A")
         sys.exit(1)
 
-    print("📂 Carregando dados:")
+    print("[INFO] Carregando dados:")
     for arquivo in sorted(arquivos):
         nome_gesto = arquivo.replace('.json', '')
         caminho = os.path.join(pasta_dados, arquivo)
@@ -52,8 +52,18 @@ def carregar_dataset(pasta_dados: str):
         y.extend([nome_gesto] * len(amostras))
         print(f"   {nome_gesto}: {len(amostras)} amostras")
 
+    try:
+        matriz = np.asarray(X, dtype=np.float32)
+    except (TypeError, ValueError) as erro:
+        raise ValueError(f'Dataset possui amostras com formato inválido: {erro}') from erro
+    if matriz.ndim != 2 or matriz.shape[1] != 73:
+        dimensao = matriz.shape[1] if matriz.ndim == 2 else 'irregular'
+        raise ValueError(f'Dataset deve ter 73 features por amostra (encontrado: {dimensao}).')
+    if not np.isfinite(matriz).all():
+        raise ValueError('Dataset possui valores não finitos (NaN ou infinito).')
+
     print(f"\n   Total: {len(X)} amostras, {len(set(y))} gestos\n")
-    return np.array(X, dtype=np.float32), y
+    return matriz, y
 
 
 def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
