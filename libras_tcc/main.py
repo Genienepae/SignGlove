@@ -16,6 +16,7 @@ import argparse
 import cv2
 import numpy as np
 import os
+import pickle
 import time
 import sys
 
@@ -109,7 +110,12 @@ def main(camera_index=0, check_only=False):
         confianca_minima=CONFIANCA_MINIMA,
         buffer_frames=BUFFER_FRAMES
     )
-    classificador.carregar(CAMINHO_MODELO)
+    try:
+        classificador.carregar(CAMINHO_MODELO)
+    except (OSError, pickle.PickleError, EOFError, AttributeError,
+            ImportError, TypeError, ValueError, KeyError) as erro:
+        print(f"[ERRO] Modelo inválido: {erro}")
+        return 1
 
     if check_only:
         dimensao = getattr(classificador.modelo, 'n_features_in_', None)
