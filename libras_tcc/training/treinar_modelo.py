@@ -51,7 +51,7 @@ def carregar_dataset(pasta_dados: str):
 
     arquivos = [f for f in os.listdir(pasta_dados) if f.endswith('.json')]
     if not arquivos:
-        print(f"❌ Nenhum arquivo .json encontrado em: {pasta_dados}")
+        print(f"[ERRO] Nenhum arquivo .json encontrado em: {pasta_dados}")
         print("   Execute primeiro: python training/coletar_dados.py --gesto A")
         sys.exit(1)
 
@@ -87,7 +87,7 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
     Isso é essencial para o TCC: mostra que o sistema foi avaliado corretamente.
     """
     print("=" * 55)
-    print("📊 AVALIAÇÃO DO MODELO")
+    print("[INFO] AVALIAÇÃO DO MODELO")
     print("=" * 55)
 
     try:
@@ -130,16 +130,16 @@ def avaliar_modelo(classificador, X, y, pasta_dados, manifesto):
     y_test_nomes = np.array(y_test)
 
     # Relatório de classificação (precisão, recall, F1 por classe)
-    print("\n📋 Relatório por gesto:")
+    print("\n[INFO] Relatório por gesto:")
     print(classification_report(y_test_nomes, y_pred))
 
     # Acurácia geral
     acuracia = np.mean(y_pred == y_test_nomes)
-    print(f"✅ Acurácia no conjunto de teste: {acuracia * 100:.1f}%")
+    print(f"[OK] Acurácia no conjunto de teste: {acuracia * 100:.1f}%")
 
     # Validação cruzada (5-fold): mais confiável que uma única divisão
     # (requer retreinar com X completo para CV)
-    print("\n🔄 Validação cruzada (5-fold) com todos os dados:")
+    print("\n[INFO] Validação cruzada (5-fold) com todos os dados:")
     from sklearn.base import clone
     modelo_cv = clone(classificador.modelo)
     from sklearn.preprocessing import LabelEncoder
@@ -165,7 +165,7 @@ def main():
     X, y = carregar_dataset(pasta_dados)
 
     # Treina e avalia o modelo
-    print("🤖 Iniciando treinamento com SVM (mais preciso)...\n")
+    print("[INFO] Iniciando treinamento com SVM (mais preciso)...\n")
     classificador = ClassificadorGestos(
         algoritmo='svm',
         confianca_minima=0.75,
@@ -175,14 +175,14 @@ def main():
     acuracia, criterio_metrica = avaliar_modelo(classificador, X, y, pasta_dados, manifesto)
 
     # Re-treina com TODOS os dados para salvar o modelo final
-    print("\n🔁 Retreinando com 100% dos dados para o modelo final...")
+    print("\n[INFO] Retreinando com 100% dos dados para o modelo final...")
     classificador.treinar(X, y)
 
     # Salva o modelo
     caminho_modelo = os.path.join(pasta_modelos, 'modelo_libras.pkl')
     classificador.salvar(caminho_modelo)
 
-    print(f"\n🎉 Pronto! Acurácia {criterio_metrica} estimada: {acuracia*100:.1f}%")
+    print(f"\n[OK] Pronto! Acurácia {criterio_metrica} estimada: {acuracia*100:.1f}%")
     if args.saida:
         salvar_resumo_treino(args.saida, acuracia, criterio_metrica, y, len(X))
         print(f"[OK] Resumo salvo em: {os.path.abspath(args.saida)}")
