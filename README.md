@@ -17,6 +17,7 @@ a presença desses scripts não demonstra que esses recursos já foram validados
 - [Protocolo de coleta com participantes](docs/PROTOCOLO_COLETA.md).
 - [Roteiro de demonstração para a banca](docs/ROTEIRO_DEMONSTRACAO.md).
 - [Formulário para o piloto de prática](docs/FORMULARIO_PILOTO.md).
+- [Diário de experimentos para o TCC](docs/DIARIO_EXPERIMENTOS.md).
 
 ## Escopo
 
