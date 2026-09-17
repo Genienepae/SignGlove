@@ -9,10 +9,12 @@ from pathlib import Path
 from .coletas import normalizar_codigo_participante
 
 
-def registrar_pratica(arquivo: str | Path, participante: str, inicio: str, acertos: int) -> dict:
+def registrar_pratica(
+    arquivo: str | Path, participante: str, inicio: str, acertos: int, erros: int = 0
+) -> dict:
     """Acrescenta uma sessão de prática sem registrar imagem ou nome da pessoa."""
-    if acertos < 0:
-        raise ValueError('A quantidade de acertos não pode ser negativa.')
+    if acertos < 0 or erros < 0:
+        raise ValueError('Acertos e erros não podem ser negativos.')
     participante = normalizar_codigo_participante(participante)
     fim = datetime.now(timezone.utc)
     inicio_data = datetime.fromisoformat(inicio)
@@ -24,6 +26,7 @@ def registrar_pratica(arquivo: str | Path, participante: str, inicio: str, acert
         'fim': fim.isoformat(),
         'duracao_segundos': duracao_segundos,
         'acertos': acertos,
+        'erros': erros,
     }
     caminho = Path(arquivo)
     caminho.parent.mkdir(parents=True, exist_ok=True)

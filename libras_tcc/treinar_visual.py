@@ -117,6 +117,8 @@ class TreinadorLibras:
         self.modo_desafio = False
         self.desafio_atual = None
         self.desafios_acertos = 0
+        self.desafios_erros = 0
+        self._ultimo_erro_desafio = None
         self.inicio_desafio = None
         self.participante_desafio = None
         self._ultimo_frame = None
@@ -913,9 +915,9 @@ class TreinadorLibras:
         if self.modo_desafio and self.inicio_desafio:
             registro = registrar_pratica(
                 PATH_MANIFESTO_PRATICAS, self.participante_desafio,
-                self.inicio_desafio, self.desafios_acertos)
+                self.inicio_desafio, self.desafios_acertos, self.desafios_erros)
             resumo_desafio = (
-                f'DESAFIO SALVO — {registro["acertos"]} acertos em '
+                f'DESAFIO SALVO — {registro["acertos"]} acertos, {registro["erros"]} erros em '
                 f'{registro["duracao_segundos"]}s ({registro["participante"]})')
         self.modo = 'idle'
         self.modo_desafio = False
@@ -935,9 +937,11 @@ class TreinadorLibras:
         if len(opcoes) > 1 and self.desafio_atual in opcoes:
             opcoes.remove(self.desafio_atual)
         self.desafio_atual = random.choice(opcoes)
+        self._ultimo_erro_desafio = None
         self._buf_teste.clear()
         self.lbl_desafio.config(
-            text=f'DESAFIO: faça a letra {self.desafio_atual}  |  Acertos: {self.desafios_acertos}',
+            text=(f'DESAFIO: faça a letra {self.desafio_atual}  |  '
+                  f'Acertos: {self.desafios_acertos}  Erros: {self.desafios_erros}'),
             fg=GREEN)
         self.status_bar.config(
             text=f'DESAFIO ATIVO — faça a letra {self.desafio_atual}', fg=GREEN)
@@ -962,6 +966,7 @@ class TreinadorLibras:
         self.modo = 'testando'
         self.modo_desafio = True
         self.desafios_acertos = 0
+        self.desafios_erros = 0
         self.inicio_desafio = datetime.now(timezone.utc).isoformat()
         self.participante_desafio = participante
         self.btn_testar.config(text='■ PARAR TESTE')
@@ -994,6 +999,15 @@ class TreinadorLibras:
         if self.modo_desafio and gesto == self.desafio_atual:
             self.desafios_acertos += 1
             self._sortear_desafio()
+        elif self.modo_desafio and gesto != self._ultimo_erro_desafio:
+            self.desafios_erros += 1
+            self._ultimo_erro_desafio = gesto
+            self.lbl_desafio.config(
+                text=(f'DESAFIO: faça a letra {self.desafio_atual}  |  '
+                      f'Acertos: {self.desafios_acertos}  Erros: {self.desafios_erros}'),
+                fg=YELLOW)
+            self.status_bar.config(
+                text=f'Ainda não: foi reconhecido {gesto}. Tente a letra {self.desafio_atual}.', fg=YELLOW)
 
     # ── ENCERRAR ──────────────────────────────────────────────────────────
     def _fechar(self):
