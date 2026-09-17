@@ -1107,7 +1107,8 @@ if __name__ == '__main__':
             print(f'[OK] Modelo visual carregado: {list(codificador.classes_)}')
             print('[OK] Treinador pronto sem acessar a câmera')
             sys.exit(0)
-        except (OSError, pickle.PickleError, ValueError, KeyError) as erro:
+        except (OSError, pickle.PickleError, EOFError, AttributeError,
+                ImportError, TypeError, ValueError, KeyError) as erro:
             print(f'[ERRO] Modelo visual inválido: {erro}')
             sys.exit(1)
     TreinadorLibras(args.camera)
