@@ -92,6 +92,12 @@ Para salvar a métrica principal em JSON:
 ```powershell
 python training/treinar_modelo.py --saida reports/treino.json
 ```
+
+Para apresentar o arquivo JSON como relatório legível no terminal:
+
+```powershell
+python training/mostrar_resultado_treino.py reports/treino.json
+```
 Isso exibe acurácia, F1 macro, precisão e recall por gesto. O arquivo JSON salva
 essas métricas por letra, a matriz de confusão, o critério de avaliação, gestos e quantidade de amostras. Com
 os dados atuais, são estimativas exploratórias por amostra, não uma avaliação em
