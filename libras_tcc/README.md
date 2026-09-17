@@ -191,6 +191,14 @@ Para verificar o modelo sem abrir nenhuma câmera:
 python main.py --check
 ```
 
+Antes de uma coleta ou treino, o diagnóstico também pode ser usado em modo
+estrito. Ele retorna código de erro quando faltam amostras ou há vetores
+inválidos, permitindo interromper um script automaticamente:
+
+```powershell
+python training/diagnosticar_projeto.py --strict
+```
+
 ## 🧠 Como Funciona — Explicado para o TCC
 
 ### Os 21 Landmarks do MediaPipe
