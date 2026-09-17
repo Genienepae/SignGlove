@@ -7,6 +7,7 @@ from libras_tcc.core.avaliacao import (
     avaliar_svm_por_participante,
     carregar_dataset_por_participante,
     divisao_por_participante_disponivel,
+    salvar_resultado_avaliacao,
 )
 
 
@@ -53,3 +54,9 @@ class AvaliacaoPorParticipanteTests(unittest.TestCase):
         resultado = avaliar_svm_por_participante(x, y, grupos)
         self.assertEqual(set(resultado['por_gesto']), {'A', 'B'})
         self.assertEqual(len(resultado['matriz_confusao']), 2)
+
+    def test_salva_resultado_em_json(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            arquivo = Path(pasta) / 'relatorios' / 'avaliacao.json'
+            salvar_resultado_avaliacao(arquivo, {'acuracia': 0.75})
+            self.assertEqual(json.loads(arquivo.read_text(encoding='utf-8')), {'acuracia': 0.75})

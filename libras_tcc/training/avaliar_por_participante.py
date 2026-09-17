@@ -1,15 +1,23 @@
 """Executa a avaliação do SignGlove sem misturar participantes."""
 
+import argparse
 import os
 import sys
 
 PASTA_RAIZ = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, PASTA_RAIZ)
 
-from core.avaliacao import carregar_dataset_por_participante, avaliar_svm_por_participante
+from core.avaliacao import (
+    carregar_dataset_por_participante,
+    avaliar_svm_por_participante,
+    salvar_resultado_avaliacao,
+)
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Avalia o modelo por participante.')
+    parser.add_argument('--saida', help='Arquivo JSON para salvar as métricas calculadas.')
+    args = parser.parse_args()
     dados = os.path.join(PASTA_RAIZ, 'data', 'gestures')
     manifesto = os.path.join(PASTA_RAIZ, 'data', 'metadata', 'coletas.jsonl')
     try:
@@ -37,6 +45,9 @@ def main():
     print('      ' + ' '.join(f'{gesto:>5}' for gesto in resultado['gestos']))
     for gesto, linha in zip(resultado['gestos'], resultado['matriz_confusao']):
         print(f'{gesto:>5} ' + ' '.join(f'{valor:5}' for valor in linha))
+    if args.saida:
+        salvar_resultado_avaliacao(args.saida, resultado)
+        print(f'\nResultado salvo em: {args.saida}')
     return 0
 
 

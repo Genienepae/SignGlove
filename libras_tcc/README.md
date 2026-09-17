@@ -115,6 +115,12 @@ Depois de coletar pelo menos dois participantes, execute:
 python training/avaliar_por_participante.py
 ```
 
+Para guardar o resultado daquele experimento em um arquivo:
+
+```bash
+python training/avaliar_por_participante.py --saida reports/avaliacao_piloto.json
+```
+
 O comando mede acurácia e F1 macro reservando pessoas inteiras para teste. Para
 um resultado mais estável, colete os mesmos gestos com pelo menos três pessoas.
 Ele também mostra precisão, recall, F1 e quantidade de amostras por gesto, além

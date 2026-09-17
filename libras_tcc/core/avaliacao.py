@@ -111,3 +111,10 @@ def avaliar_svm_por_participante(features, classes, grupos) -> dict:
         'por_gesto': por_gesto,
         'matriz_confusao': confusion_matrix(classes, previsoes, labels=rotulos).tolist(),
     }
+
+
+def salvar_resultado_avaliacao(arquivo: str | Path, resultado: dict) -> None:
+    """Salva métricas já calculadas em JSON para anexar ao relatório do TCC."""
+    caminho = Path(arquivo)
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    caminho.write_text(json.dumps(resultado, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
