@@ -20,6 +20,8 @@ def main():
     for gesto, quantidade in resultado['amostras_por_gesto'].items():
         print(f'  {gesto}: {quantidade} amostras')
     print(f"Total: {resultado['total_amostras']} amostras")
+    print('Dimensões dos vetores: ' + (', '.join(map(str, resultado['dimensoes_features'])) or 'nenhuma'))
+    print(f"Amostras inválidas: {resultado['amostras_invalidas']}")
     print('Modelo salvo: ' + ('sim' if resultado['modelo_encontrado'] else 'não'))
     print('Pronto para treino: ' + ('sim' if resultado['pronto_treino'] else 'não'))
     print('Avaliação por participante: ' + (
