@@ -92,8 +92,10 @@ Para salvar a métrica principal em JSON:
 ```powershell
 python training/treinar_modelo.py --saida reports/treino.json
 ```
-Isso exibe acurácia, precisão e recall por gesto. Com os dados atuais, são
-estimativas exploratórias por amostra, não uma avaliação em pessoas novas.
+Isso exibe acurácia, F1 macro, precisão e recall por gesto. O arquivo JSON salva
+acurácia, F1 macro, critério de avaliação, gestos e quantidade de amostras. Com
+os dados atuais, são estimativas exploratórias por amostra, não uma avaliação em
+pessoas novas.
 
 ### Treinador visual
 
