@@ -114,6 +114,19 @@ class ConfirmacaoTemporalTests(unittest.TestCase):
             classificador.carregar(str(caminho))
             self.assertEqual(len(classificador._buffer), 0)
 
+    def test_salvar_registra_formato_e_dimensao(self):
+        classificador = ClassificadorGestos()
+        classificador.label_encoder.fit(['A', 'B'])
+        classificador.modelo = ModeloFixo()
+        classificador.treinado = True
+        with tempfile.TemporaryDirectory() as pasta:
+            caminho = Path(pasta) / 'modelo.pkl'
+            classificador.salvar(str(caminho))
+            with caminho.open('rb') as arquivo:
+                salvo = pickle.load(arquivo)
+        self.assertEqual(salvo['formato_modelo'], 2)
+        self.assertIsNone(salvo['features_esperadas'])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -152,14 +152,16 @@ class ClassificadorGestos:
     def salvar(self, caminho: str):
         """Salva o modelo treinado em disco."""
         dados = {
+            'formato_modelo': 2,
             'modelo': self.modelo,
             'label_encoder': self.label_encoder,
             'algoritmo': self.algoritmo,
             'confianca_minima': self.confianca_minima,
+            'features_esperadas': getattr(self.modelo, 'n_features_in_', None),
         }
         with open(caminho, 'wb') as f:
             pickle.dump(dados, f)
-        print(f"💾 Modelo salvo em: {caminho}")
+        print(f"[OK] Modelo salvo em: {caminho}")
 
     def carregar(self, caminho: str):
         """Carrega um modelo previamente treinado."""

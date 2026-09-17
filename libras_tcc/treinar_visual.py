@@ -933,11 +933,13 @@ class TreinadorLibras:
             os.makedirs(DIR_MODEL, exist_ok=True)
             with open(PATH_MODEL, 'wb') as f:
                 pickle.dump({
+                    'formato_modelo': 2,
                     'modelo': modelo,
                     'le': le,
                     'nome_modelo': nome_modelo,
                     'acuracias_cv': medias,
                     'criterio_metrica': criterio_metrica,
+                    'features_esperadas': getattr(modelo, 'n_features_in_', None),
                 }, f)
 
             self.modelo   = modelo
