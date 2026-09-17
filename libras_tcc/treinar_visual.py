@@ -557,6 +557,8 @@ class TreinadorLibras:
 
     # ── CÂMERA ───────────────────────────────────────────────────────────
     def _iniciar_camera(self):
+        # Mantém o uso de CPU previsível em computadores escolares.
+        cv2.setNumThreads(1)
         self.detector = HandDetector(min_detection_confidence=0.75, model_complexity=0)
         self.cap = cv2.VideoCapture(self.camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)

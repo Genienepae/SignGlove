@@ -190,7 +190,8 @@ python main.py
 ---
 
 O reconhecimento principal usa câmera em 640×480 e o modelo leve do MediaPipe
-para diminuir atraso em computadores escolares. Se a câmera externa estiver sendo
+para diminuir atraso em computadores escolares. O OpenCV também fica limitado a
+um thread para evitar disputa de CPU. Se a câmera externa estiver sendo
 usada por outro programa, feche esse programa antes de abrir o reconhecimento.
 Se a câmera do celular aparecer como outro dispositivo, experimente:
 

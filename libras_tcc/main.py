@@ -115,6 +115,8 @@ def main(camera_index=0, check_only=False):
         print(f"[OK] Modelo pronto para uso: {list(classificador.label_encoder.classes_)}")
         return
 
+    # Evita que o OpenCV crie threads concorrentes com o MediaPipe em PCs modestos.
+    cv2.setNumThreads(1)
     detector = HandDetector(
         max_hands=1,
         min_detection_confidence=0.8,
