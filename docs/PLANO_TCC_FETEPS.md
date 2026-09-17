@@ -23,8 +23,8 @@ e avaliação do ganho de aprendizagem. É uma proposta a construir e testar.
 | Dados | A: 350; B, C, D e F: 150 amostras cada; total de 950 vetores de 73 características | Cinco classes não demonstram cobertura do alfabeto ou de conversação. |
 | Procedência | JSONs sem identificador de pessoa ou sessão | Não permitem comprovar separação de pessoas entre treino e teste. |
 | Aplicação | `main.py` usa uma mão e o classificador estático | Os scripts LSTM não estão integrados a essa aplicação. |
-| Avaliação estática | `training/treinar_modelo.py` separa amostras aleatoriamente | Frames próximos ou da mesma pessoa podem aparecer nos dois conjuntos. |
-| Avaliação visual | `treinar_visual.py` aumenta dados antes da validação cruzada | Variações de uma amostra podem compartilhar treino e validação e inflar a métrica. |
+| Avaliação estática | `training/treinar_modelo.py` usa grupos quando há manifesto completo e avisa quando não há | Dados antigos sem participante continuam inadequados para afirmar generalização. |
+| Avaliação visual | `treinar_visual.py` seleciona o modelo por grupos quando a cobertura permite | Sem lotes completos por participante, a tela mantém a métrica por amostra. |
 | Avaliação LSTM | Sequências aumentadas antes da divisão interna de treino e validação | Mesmo risco de compartilhar versões de uma sequência. |
 | Persistência | Interface salva `modelo` e `le`; classificador principal espera `modelo`, `label_encoder` e configurações | Unificar formatos antes de alternar entre os caminhos de treinamento. |
 | Confirmação | Uma predição podia herdar a confirmação da classe anterior | Corrigido nesta revisão, com testes de troca de classe e limites da janela. |
@@ -109,7 +109,7 @@ deve acompanhar metodologia, documentação e procedimentos de participação an
 ## Avaliação necessária
 
 1. Registrar códigos de participante, sessão e tentativa, classe, mão e iluminação.
-   Centenas de frames seguidos não equivalem a centenas de demonstrações independentes.
+   Use códigos como `P01/S01` e `P01/S02`; centenas de frames seguidos não equivalem a centenas de demonstrações independentes.
    Não inventar metadados para os JSONs antigos.
 2. Reservar pessoas inteiras para teste. Separar sessões e tentativas conforme a
    pergunta experimental. A documentação do

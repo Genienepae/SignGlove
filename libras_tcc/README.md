@@ -120,7 +120,8 @@ pessoas novas.
 Antes de gravar, informe um **código anônimo** de participante, como `P01` ou
 `P02`; não use nome completo. Cada gravação nova gera um registro em
 `data/metadata/coletas.jsonl` com o código, gesto, horário e intervalo das
-amostras daquele lote. Esses registros permitem reservar participantes inteiros
+amostras daquele lote. Use também sessões como `S01` e `S02` para separar dias
+ou condições de coleta. Esses registros permitem reservar participantes inteiros
 para testes futuros. As amostras antigas não têm esse histórico e não devem ser
 apresentadas como coleta por participante.
 
