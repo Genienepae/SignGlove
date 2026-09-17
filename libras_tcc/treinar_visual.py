@@ -40,7 +40,6 @@ from collections import deque, Counter
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
-from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
 from core.coletas import (
     registrar_lote, remover_registros_do_gesto,
@@ -560,6 +559,7 @@ class TreinadorLibras:
     def _iniciar_camera(self):
         # Mantém o uso de CPU previsível em computadores escolares.
         cv2.setNumThreads(1)
+        from core.detector import HandDetector
         self.detector = HandDetector(min_detection_confidence=0.75, model_complexity=0)
         self.cap = cv2.VideoCapture(self.camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)

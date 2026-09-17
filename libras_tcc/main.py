@@ -20,7 +20,6 @@ import pickle
 import time
 import sys
 
-from core.detector import HandDetector
 from core.features import extrair_features, dedos_levantados
 from core.classifier import ClassificadorGestos
 
@@ -129,6 +128,8 @@ def main(camera_index=0, check_only=False):
 
     # Evita que o OpenCV crie threads concorrentes com o MediaPipe em PCs modestos.
     cv2.setNumThreads(1)
+    # MediaPipe só é necessário quando a câmera realmente será aberta.
+    from core.detector import HandDetector
     detector = HandDetector(
         max_hands=1,
         min_detection_confidence=0.8,
