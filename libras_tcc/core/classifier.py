@@ -89,7 +89,7 @@ class ClassificadorGestos:
 
         self.modelo.fit(X, y_encoded)
         self.treinado = True
-        print(f"✅ Modelo treinado com {len(X)} amostras e {len(set(y))} classes.")
+        print(f"[OK] Modelo treinado com {len(X)} amostras e {len(set(y))} classes.")
         print(f"   Classes: {list(self.label_encoder.classes_)}")
 
     def prever(self, features: np.ndarray) -> tuple:

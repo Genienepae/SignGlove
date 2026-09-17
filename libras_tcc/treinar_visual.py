@@ -1091,7 +1091,7 @@ if __name__ == '__main__':
     try:
         from PIL import Image, ImageTk
     except ImportError:
-        print('\n❌  Pillow não encontrado.')
+        print('\n[ERRO] Pillow não encontrado.')
         print('   Instale com:  pip install Pillow')
         print('   Depois execute:  python treinar_visual.py\n')
         sys.exit(1)
