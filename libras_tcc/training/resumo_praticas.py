@@ -37,6 +37,8 @@ def main():
     print('\nRESUMO DE PRÁTICAS')
     print(f"Sessões: {resumo['sessoes']}")
     print('Participante | Sessões | Acertos | Erros | Tempo')
+    print(f"Total: {resumo['acertos']} acertos / {resumo['erros']} erros "
+          f"({resumo['taxa_acerto'] * 100:.1f}% de acerto)")
     for codigo, dados in sorted(resumo['participantes'].items()):
         minutos, segundos = divmod(dados['duracao_segundos'], 60)
         print(f"{codigo:12} | {dados['sessoes']:8} | {dados['acertos']:7} | "

@@ -19,6 +19,9 @@ class RelatorioPraticasTests(unittest.TestCase):
 
             resumo = resumir_praticas(arquivo)
             self.assertEqual(resumo['sessoes'], 3)
+            self.assertEqual(resumo['acertos'], 9)
+            self.assertEqual(resumo['erros'], 3)
+            self.assertEqual(resumo['taxa_acerto'], 0.75)
             self.assertEqual(resumo['participantes']['P01'], {
                 'sessoes': 2, 'acertos': 5, 'erros': 3, 'duracao_segundos': 50,
                 'taxa_acerto': 0.625,
@@ -27,4 +30,5 @@ class RelatorioPraticasTests(unittest.TestCase):
     def test_sem_arquivo_retorna_resumo_vazio(self):
         with tempfile.TemporaryDirectory() as pasta:
             self.assertEqual(resumir_praticas(Path(pasta) / 'ausente.jsonl'),
-                             {'sessoes': 0, 'participantes': {}})
+                             {'sessoes': 0, 'acertos': 0, 'erros': 0,
+                              'taxa_acerto': 0.0, 'participantes': {}})

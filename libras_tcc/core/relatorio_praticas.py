@@ -9,7 +9,7 @@ from pathlib import Path
 def resumir_praticas(arquivo: str | Path) -> dict:
     caminho = Path(arquivo)
     if not caminho.exists():
-        return {'sessoes': 0, 'participantes': {}}
+        return {'sessoes': 0, 'acertos': 0, 'erros': 0, 'taxa_acerto': 0.0, 'participantes': {}}
 
     participantes = {}
     for numero_linha, linha in enumerate(caminho.read_text(encoding='utf-8').splitlines(), start=1):
@@ -36,4 +36,13 @@ def resumir_praticas(arquivo: str | Path) -> dict:
         tentativas = total['acertos'] + total['erros']
         total['taxa_acerto'] = (total['acertos'] / tentativas) if tentativas else 0.0
 
-    return {'sessoes': sum(item['sessoes'] for item in participantes.values()), 'participantes': participantes}
+    acertos = sum(item['acertos'] for item in participantes.values())
+    erros = sum(item['erros'] for item in participantes.values())
+    tentativas = acertos + erros
+    return {
+        'sessoes': sum(item['sessoes'] for item in participantes.values()),
+        'acertos': acertos,
+        'erros': erros,
+        'taxa_acerto': (acertos / tentativas) if tentativas else 0.0,
+        'participantes': participantes,
+    }
