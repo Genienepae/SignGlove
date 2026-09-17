@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from libras_tcc.core.avaliacao import (
+    avaliar_svm_por_participante,
     carregar_dataset_por_participante,
     divisao_por_participante_disponivel,
 )
@@ -44,3 +45,11 @@ class AvaliacaoPorParticipanteTests(unittest.TestCase):
             ['A', 'B', 'A', 'B'], ['P01', 'P01', 'P02', 'P02']))
         self.assertFalse(divisao_por_participante_disponivel(
             ['A', 'B', 'A'], ['P01', 'P01', 'P02']))
+
+    def test_avaliacao_retorna_metricas_por_gesto(self):
+        x = [[0, 0], [0.1, 0], [1, 1], [1.1, 1], [0, 0.1], [0.1, 0.1], [1, 1.1], [1.1, 1.1]]
+        y = ['A', 'A', 'B', 'B', 'A', 'A', 'B', 'B']
+        grupos = ['P01', 'P01', 'P01', 'P01', 'P02', 'P02', 'P02', 'P02']
+        resultado = avaliar_svm_por_participante(x, y, grupos)
+        self.assertEqual(set(resultado['por_gesto']), {'A', 'B'})
+        self.assertEqual(len(resultado['matriz_confusao']), 2)

@@ -27,6 +27,16 @@ def main():
     print(f"Acurácia: {resultado['acuracia'] * 100:.1f}%")
     print(f"F1 macro: {resultado['f1_macro'] * 100:.1f}%")
     print('Cada divisão reserva uma pessoa inteira para teste.')
+    print('\nPOR GESTO')
+    print('Gesto | Precisão | Recall | F1 | Amostras')
+    for gesto, metricas in resultado['por_gesto'].items():
+        print(f"{gesto:5} | {metricas['precisao'] * 100:8.1f}% | "
+              f"{metricas['recall'] * 100:6.1f}% | {metricas['f1'] * 100:5.1f}% | "
+              f"{metricas['amostras']:8}")
+    print('\nMATRIZ DE CONFUSÃO (linhas: gesto real; colunas: previsão)')
+    print('      ' + ' '.join(f'{gesto:>5}' for gesto in resultado['gestos']))
+    for gesto, linha in zip(resultado['gestos'], resultado['matriz_confusao']):
+        print(f'{gesto:>5} ' + ' '.join(f'{valor:5}' for valor in linha))
     return 0
 
 

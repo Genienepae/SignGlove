@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_recall_fscore_support
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -72,6 +72,9 @@ def divisao_por_participante_disponivel(classes, grupos) -> bool:
 
 def avaliar_svm_por_participante(features, classes, grupos) -> dict:
     """Mede uma SVM em divisões que nunca misturam a mesma pessoa."""
+    features = np.asarray(features, dtype=float)
+    classes = np.asarray(classes)
+    grupos = np.asarray(grupos)
     participantes = np.unique(grupos)
     if not divisao_por_participante_disponivel(classes, grupos):
         raise ValueError(
@@ -87,10 +90,24 @@ def avaliar_svm_por_participante(features, classes, grupos) -> dict:
         modelo.fit(features[treino], classes[treino])
         previsoes[teste] = modelo.predict(features[teste])
 
+    rotulos = list(np.unique(classes))
+    precisao, recall, f1, suporte = precision_recall_fscore_support(
+        classes, previsoes, labels=rotulos, zero_division=0)
+    por_gesto = {
+        gesto: {
+            'precisao': float(precisao[indice]),
+            'recall': float(recall[indice]),
+            'f1': float(f1[indice]),
+            'amostras': int(suporte[indice]),
+        }
+        for indice, gesto in enumerate(rotulos)
+    }
     return {
         'participantes': list(participantes),
         'amostras': int(len(classes)),
-        'gestos': list(np.unique(classes)),
+        'gestos': rotulos,
         'acuracia': float(accuracy_score(classes, previsoes)),
         'f1_macro': float(f1_score(classes, previsoes, average='macro', zero_division=0)),
+        'por_gesto': por_gesto,
+        'matriz_confusao': confusion_matrix(classes, previsoes, labels=rotulos).tolist(),
     }

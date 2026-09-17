@@ -117,6 +117,8 @@ python training/avaliar_por_participante.py
 
 O comando mede acurácia e F1 macro reservando pessoas inteiras para teste. Para
 um resultado mais estável, colete os mesmos gestos com pelo menos três pessoas.
+Ele também mostra precisão, recall, F1 e quantidade de amostras por gesto, além
+da matriz de confusão para identificar quais letras foram confundidas.
 
 ### Modo desafio
 
