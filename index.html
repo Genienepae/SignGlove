@@ -97,12 +97,17 @@ function stop(message='Câmera pausada. Toque em iniciar para continuar.'){
 function getWorker(){
  if(workerReady)return workerReady;
  workerReady=new Promise((resolve,reject)=>{
+  let initialized=false;
   handWorker=new Worker('./hand-worker.js',{type:'module'});
-  const timeout=setTimeout(()=>reject(new Error('O detector demorou demais para iniciar.')),20000);
+  const timeout=setTimeout(()=>reject(new Error('O detector demorou demais para iniciar.')),12000);
   handWorker.onmessage=(event)=>{
    const data=event.data||{};
+   if(data.type==='STATUS'){
+    status(data.message||'Carregando detector…');
+    return;
+   }
    if(data.type==='READY'){
-    clearTimeout(timeout);workerBackend=data.backend||'?';resolve(handWorker);return;
+    initialized=true;clearTimeout(timeout);workerBackend=data.backend||'?';resolve(handWorker);return;
    }
    if(data.type==='RESULT'){
     workerBusy=false;processing=false;lastDetectCost=data.inferenceTime||0;
@@ -114,6 +119,10 @@ function getWorker(){
    if(data.type==='ERROR'){
     workerBusy=false;processing=false;
     console.error('Erro no worker do MediaPipe:',data.error);
+    if(!initialized){
+      clearTimeout(timeout);
+      reject(new Error('Falha ao carregar o detector: '+(data.error||'erro desconhecido')));
+    }
    }
   };
   handWorker.onerror=(event)=>{clearTimeout(timeout);workerBusy=false;processing=false;reject(new Error(event.message||'Falha ao iniciar o detector.'));};
@@ -151,6 +160,7 @@ async function start(){
   if(token!==generation){next.getTracks().forEach(t=>t.stop());return;}
   stream=next;video.srcObject=stream;video.hidden=false;await video.play();
   if(token!==generation)return;
+  $('placeholder').hidden=true;
   status('Carregando o detector de mãos… Na primeira abertura, o download pode demorar.');
   await getWorker();if(token!==generation)return;
   starting=false;running=true;lastFrame=-1;lastRun=0;updateButtons();$('placeholder').hidden=true;
