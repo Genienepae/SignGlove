@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1725"><title>SignGlove · Mobile</title>
 <style>
-:root{color-scheme:dark;--bg:#0c1725;--panel:#142339;--line:#293c52;--muted:#b1c1d3;--mint:#8df1ce}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f0f5fc;font:16px/1.5 system-ui,sans-serif}main{max-width:760px;margin:auto;padding:24px 18px calc(28px + env(safe-area-inset-bottom))}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}h1{font-size:25px;line-height:1.2;margin:0;letter-spacing:-1px}small,.muted{color:var(--muted)}.badge{border:1px solid var(--line);border-radius:30px;padding:6px 12px;font-size:12px;color:var(--mint)}h2{font-size:19px;margin:0 0 6px}.intro{margin:0 0 18px;color:var(--muted);font-size:14px}.viewer{position:relative;min-height:235px;border-radius:20px;overflow:hidden;background:#070e17;border:1px solid var(--line)}canvas{display:block;width:100%;height:auto;min-height:235px;object-fit:contain}#placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:24px;color:var(--muted)}#placeholder[hidden]{display:none}.hand{font-size:46px;line-height:1.4;color:var(--mint)}.camera-tag{position:absolute;top:12px;left:12px;font-size:12px;padding:4px 10px;border-radius:20px;background:#0c1725db}.result{display:flex;align-items:center;gap:20px;padding:15px 18px;margin-top:12px;background:var(--panel);border-radius:16px}#letter{font-size:54px;line-height:1.2;min-width:58px;color:var(--mint);font-weight:700}.result small{display:block}progress{accent-color:var(--mint);width:100%;height:8px}.result-detail{flex:1}#status{min-height:48px;font-size:14px;color:var(--muted);margin:14px 2px}.row{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}button{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#1b2e45;color:#f0f5fc;padding:10px 16px;font:600 14px system-ui;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:wait}button:focus-visible,summary:focus-visible,textarea:focus-visible{outline:3px solid var(--mint);outline-offset:3px}#start{background:var(--mint);color:#0c1725;border-color:var(--mint);flex:1}.secondary{flex:1}section.text-panel{margin-top:22px}textarea{font:22px/1.5 system-ui;width:100%;resize:vertical;min-height:100px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#101f31;color:white}.edits button{flex:1;padding:10px 8px}details{border-top:1px solid var(--line);padding:16px 0;margin-top:16px;font-size:14px;color:var(--muted)}summary{color:#f0f5fc;cursor:pointer;font-weight:600}a{color:var(--mint)}footer{font-size:12px;color:var(--muted);padding-top:8px}video{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none}label{display:block;margin-bottom:8px;font-weight:600}ul,ol{padding-left:22px}@media(min-width:680px){main{padding-top:36px}.viewer{min-height:300px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+:root{color-scheme:dark;--bg:#0c1725;--panel:#142339;--line:#293c52;--muted:#b1c1d3;--mint:#8df1ce}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f0f5fc;font:16px/1.5 system-ui,sans-serif}main{max-width:760px;margin:auto;padding:24px 18px calc(28px + env(safe-area-inset-bottom))}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}h1{font-size:25px;line-height:1.2;margin:0;letter-spacing:-1px}small,.muted{color:var(--muted)}.badge{border:1px solid var(--line);border-radius:30px;padding:6px 12px;font-size:12px;color:var(--mint)}h2{font-size:19px;margin:0 0 6px}.intro{margin:0 0 18px;color:var(--muted);font-size:14px}.viewer{position:relative;min-height:235px;border-radius:20px;overflow:hidden;background:#070e17;border:1px solid var(--line)}canvas{position:absolute;inset:0;z-index:2;display:block;width:100%;height:100%;min-height:235px;object-fit:contain;pointer-events:none}#placeholder{position:absolute;inset:0;z-index:3;display:grid;place-content:center;text-align:center;padding:24px;color:var(--muted)}#placeholder[hidden]{display:none}.hand{font-size:46px;line-height:1.4;color:var(--mint)}.camera-tag{position:absolute;z-index:4;top:12px;left:12px;font-size:12px;padding:4px 10px;border-radius:20px;background:#0c1725db}.result{display:flex;align-items:center;gap:20px;padding:15px 18px;margin-top:12px;background:var(--panel);border-radius:16px}#letter{font-size:54px;line-height:1.2;min-width:58px;color:var(--mint);font-weight:700}.result small{display:block}progress{accent-color:var(--mint);width:100%;height:8px}.result-detail{flex:1}#status{min-height:48px;font-size:14px;color:var(--muted);margin:14px 2px}.row{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}button{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#1b2e45;color:#f0f5fc;padding:10px 16px;font:600 14px system-ui;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:wait}button:focus-visible,summary:focus-visible,textarea:focus-visible{outline:3px solid var(--mint);outline-offset:3px}#start{background:var(--mint);color:#0c1725;border-color:var(--mint);flex:1}.secondary{flex:1}section.text-panel{margin-top:22px}textarea{font:22px/1.5 system-ui;width:100%;resize:vertical;min-height:100px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#101f31;color:white}.edits button{flex:1;padding:10px 8px}details{border-top:1px solid var(--line);padding:16px 0;margin-top:16px;font-size:14px;color:var(--muted)}summary{color:#f0f5fc;cursor:pointer;font-weight:600}a{color:var(--mint)}footer{font-size:12px;color:var(--muted);padding-top:8px}video{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:contain;transform:scaleX(-1);pointer-events:none;background:#070e17}video[hidden]{display:none}label{display:block;margin-bottom:8px;font-weight:600}ul,ol{padding-left:22px}@media(min-width:680px){main{padding-top:36px}.viewer{min-height:300px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style></head><body><main>
 <header><div><h1>SignGlove<span style="color:var(--mint)">.</span></h1><small>Pratique com as mãos</small></div><span class="badge">MOBILE · PROTÓTIPO</span></header>
 <h2>Um gesto de cada vez.</h2><p class="intro">Reconhecimento experimental de A, B, C, D e F. Mostre uma mão e mantenha o gesto.</p>
 <div class="viewer"><canvas id="preview" width="360" height="270" aria-label="Imagem da câmera com pontos da mão"></canvas><div id="placeholder"><div class="hand" aria-hidden="true">✋</div><strong>Sua câmera, seus gestos</strong><span>Toque em iniciar para começar.</span></div><span class="camera-tag" id="camera">Frontal</span></div>
-<video id="video" playsinline muted autoplay aria-hidden="true"></video>
+<video id="video" playsinline muted autoplay aria-hidden="true" hidden></video>
 <div class="result"><div id="letter" aria-label="Letra reconhecida">—</div><div class="result-detail"><strong>Gesto identificado</strong><small id="confidence">Mostre uma mão inteira</small><progress id="meter" max="1" value="0" aria-label="Confiança do modelo"></progress></div></div>
 <p id="status" role="status" aria-live="polite">A câmera só será ligada quando você tocar em iniciar.</p>
 <div class="row"><button id="start">Iniciar câmera</button><button id="switch" aria-label="Trocar entre câmera frontal e traseira">Trocar câmera</button></div>
@@ -75,7 +75,7 @@ root.SignGlove={features,predict,Confirmation};
 })(typeof module!=='undefined'?module.exports:globalThis);
 </script><script>'use strict';
 const $=id=>document.getElementById(id);
-const video=$('video'),canvas=$('preview'),ctx=canvas.getContext('2d',{alpha:false}),input=document.createElement('canvas'),ic=input.getContext('2d',{alpha:false});
+const video=$('video'),canvas=$('preview'),ctx=canvas.getContext('2d',{alpha:true}),input=document.createElement('canvas'),ic=input.getContext('2d',{alpha:false});
 video.playsInline=true;video.muted=true;
 // Perfil de desempenho para HONOR X5b Plus / Helio G36.
 // O modelo classifica uma única mão; limitar o detector a 1 mão evita processamento desperdiçado.
@@ -92,7 +92,7 @@ function updateButtons(){ $('start').textContent=starting?'Cancelar':running?'Pa
 function resetResult(){confirmation.reset();$('letter').textContent='—';$('confidence').textContent='Mostre uma mão inteira';$('meter').value=0;}
 function stop(message='Câmera pausada. Toque em iniciar para continuar.'){
  generation++;running=false;starting=false;clearTimeout(loopTimer);loopTimer=0;processing=false;
- if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;resetResult();updateButtons();status(message);
+ if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;video.hidden=true;resetResult();updateButtons();status(message);
  ctx.clearRect(0,0,canvas.width,canvas.height);$('placeholder').hidden=false;
 }
 async function getDetector(){
@@ -123,7 +123,7 @@ async function start(){
  try{
   const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:320,max:360},height:{ideal:240,max:270},frameRate:{ideal:8,max:12}},audio:false});
   if(token!==generation){next.getTracks().forEach(t=>t.stop());return;}
-  stream=next;video.srcObject=stream;await video.play();
+  stream=next;video.srcObject=stream;video.hidden=false;await video.play();
   if(token!==generation)return;
   status('Carregando o detector de mãos… Na primeira abertura, o download pode demorar.');
   const d=await getDetector();if(token!==generation)return;
@@ -136,7 +136,7 @@ async function start(){
 function size(w,h){const scale=Math.min(1,DEVICE_MAX_WIDTH/w);input.width=canvas.width=Math.round(w*scale);input.height=canvas.height=Math.round(h*scale);}
 function drawSource(source,w,h){if(input.width!==Math.round(w*Math.min(1,DEVICE_MAX_WIDTH/w))||input.height!==Math.round(h*Math.min(1,DEVICE_MAX_WIDTH/w)))size(w,h);
  // Match cv2.flip(frame, 1) in the original desktop pipeline.
- ic.setTransform(-1,0,0,1,input.width,0);ic.drawImage(source,0,0,input.width,input.height);ic.setTransform(1,0,0,1,0,0);ctx.drawImage(input,0,0);
+ ic.setTransform(-1,0,0,1,input.width,0);ic.drawImage(source,0,0,input.width,input.height);ic.setTransform(1,0,0,1,0,0);
 }
 function annotate(points){
  const colors=['#fbbf24','#fb7185','#67e8f9','#a5b4fc','#86efac'];
@@ -187,6 +187,7 @@ function frame(){
    drawSource(video,video.videoWidth,video.videoHeight);
    const t0=performance.now();
    const detection=detector.detectForVideo(input,now);
+   ctx.clearRect(0,0,canvas.width,canvas.height);
    result(detection.landmarks,now);
    lastDetectCost=performance.now()-t0;
    // Mantém folga para o aparelho não ficar preso em inferência contínua.
@@ -210,7 +211,7 @@ $('file').onchange=async()=>{
  try{
   url=URL.createObjectURL(file);const img=new Image();img.src=url;await img.decode();const d=await getDetector();if(token!==generation)return;
   await d.setOptions({runningMode:'IMAGE'});if(token!==generation)return;
-  drawSource(img,img.naturalWidth,img.naturalHeight);$('placeholder').hidden=true;result(d.detect(input).landmarks,performance.now(),true);
+  drawSource(img,img.naturalWidth,img.naturalHeight);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(input,0,0,canvas.width,canvas.height);$('placeholder').hidden=true;result(d.detect(input).landmarks,performance.now(),true);
  }catch(e){if(token===generation)status(errorText(e));}
  finally{if(url)URL.revokeObjectURL(url);$('file').value='';if(token===generation){starting=false;updateButtons();}}
 };
