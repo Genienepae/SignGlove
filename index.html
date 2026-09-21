@@ -3,7 +3,7 @@
 <style>
 :root{color-scheme:dark;--bg:#0c1725;--panel:#142339;--line:#293c52;--muted:#b1c1d3;--mint:#8df1ce}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f0f5fc;font:16px/1.5 system-ui,sans-serif}main{max-width:760px;margin:auto;padding:24px 18px calc(28px + env(safe-area-inset-bottom))}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}h1{font-size:25px;line-height:1.2;margin:0;letter-spacing:-1px}small,.muted{color:var(--muted)}.badge{border:1px solid var(--line);border-radius:30px;padding:6px 12px;font-size:12px;color:var(--mint)}h2{font-size:19px;margin:0 0 6px}.intro{margin:0 0 18px;color:var(--muted);font-size:14px}.viewer{position:relative;min-height:235px;border-radius:20px;overflow:hidden;background:#070e17;border:1px solid var(--line)}canvas{position:absolute;inset:0;z-index:2;display:block;width:100%;height:100%;min-height:235px;object-fit:contain;pointer-events:none}#placeholder{position:absolute;inset:0;z-index:3;display:grid;place-content:center;text-align:center;padding:24px;color:var(--muted)}#placeholder[hidden]{display:none}.hand{font-size:46px;line-height:1.4;color:var(--mint)}.camera-tag{position:absolute;z-index:4;top:12px;left:12px;font-size:12px;padding:4px 10px;border-radius:20px;background:#0c1725db}.result{display:flex;align-items:center;gap:20px;padding:15px 18px;margin-top:12px;background:var(--panel);border-radius:16px}#letter{font-size:54px;line-height:1.2;min-width:58px;color:var(--mint);font-weight:700}.result small{display:block}progress{accent-color:var(--mint);width:100%;height:8px}.result-detail{flex:1}#status{min-height:48px;font-size:14px;color:var(--muted);margin:14px 2px}.row{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}button{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#1b2e45;color:#f0f5fc;padding:10px 16px;font:600 14px system-ui;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:wait}button:focus-visible,summary:focus-visible,textarea:focus-visible{outline:3px solid var(--mint);outline-offset:3px}#start{background:var(--mint);color:#0c1725;border-color:var(--mint);flex:1}.secondary{flex:1}section.text-panel{margin-top:22px}textarea{font:22px/1.5 system-ui;width:100%;resize:vertical;min-height:100px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#101f31;color:white}.edits button{flex:1;padding:10px 8px}details{border-top:1px solid var(--line);padding:16px 0;margin-top:16px;font-size:14px;color:var(--muted)}summary{color:#f0f5fc;cursor:pointer;font-weight:600}a{color:var(--mint)}footer{font-size:12px;color:var(--muted);padding-top:8px}video{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:contain;transform:scaleX(-1);pointer-events:none;background:#070e17}video[hidden]{display:none}label{display:block;margin-bottom:8px;font-weight:600}ul,ol{padding-left:22px}@media(min-width:680px){main{padding-top:36px}.viewer{min-height:300px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style></head><body><main>
-<header><div><h1>SignGlove<span style="color:var(--mint)">.</span></h1><small>Pratique com as mãos</small></div><span class="badge">MOBILE · PROTÓTIPO</span></header>
+<header><div><h1>SignGlove<span style="color:var(--mint)">.</span></h1><small>Pratique com as mãos</small></div><span class="badge">MOBILE · BUILD 5</span></header>
 <h2>Um gesto de cada vez.</h2><p class="intro">Reconhecimento experimental de A, B, C, D e F. Mostre uma mão e mantenha o gesto.</p>
 <div class="viewer"><video id="video" playsinline muted autoplay aria-hidden="true" hidden></video><canvas id="preview" width="360" height="270" aria-label="Imagem da câmera com pontos da mão"></canvas><div id="placeholder"><div class="hand" aria-hidden="true">✋</div><strong>Sua câmera, seus gestos</strong><span>Toque em iniciar para começar.</span></div><span class="camera-tag" id="camera">Frontal</span></div>
 <div class="result"><div id="letter" aria-label="Letra reconhecida">—</div><div class="result-detail"><strong>Gesto identificado</strong><small id="confidence">Mostre uma mão inteira</small><progress id="meter" max="1" value="0" aria-label="Confiança do modelo"></progress></div></div>
@@ -83,7 +83,7 @@ const DEVICE_MAX_WIDTH=224;
 const TARGET_INTERVAL=240;
 const MAX_INTERVAL=650;
 let processInterval=TARGET_INTERVAL, processing=false, loopTimer=0;
-let lastDetectCost=0,workerBusy=false,handWorker=null,workerReady=null,workerBackend='…';
+let lastDetectCost=0,workerBusy=false,handWorker=null,workerReady=null,workerBackend='…',detectorMode='worker';
 const model=JSON.parse($('model').textContent),confirmation=new SignGlove.Confirmation();
 let detector=null,loading=null,stream=null,running=false,starting=false,generation=0,lastFrame=-1,lastRun=0,facing='user';
 const status=text=>$('status').textContent=text;
@@ -98,8 +98,8 @@ function getWorker(){
  if(workerReady)return workerReady;
  workerReady=new Promise((resolve,reject)=>{
   let initialized=false;
-  handWorker=new Worker('./hand-worker.js',{type:'module'});
-  const timeout=setTimeout(()=>reject(new Error('O detector demorou demais para iniciar.')),12000);
+  handWorker=new Worker('./hand-worker.js?v=build5',{type:'module'});
+  const timeout=setTimeout(()=>reject(new Error('O detector em segundo plano não respondeu.')),6000);
   handWorker.onmessage=(event)=>{
    const data=event.data||{};
    if(data.type==='STATUS'){
@@ -161,11 +161,24 @@ async function start(){
   stream=next;video.srcObject=stream;video.hidden=false;await video.play();
   if(token!==generation)return;
   $('placeholder').hidden=true;
-  status('Carregando o detector de mãos… Na primeira abertura, o download pode demorar.');
-  await getWorker();if(token!==generation)return;
+  status('Carregando o detector de mãos…');
+  let modeLabel='worker';
+  try{
+   await getWorker();
+   detectorMode='worker';
+   modeLabel='worker '+workerBackend;
+  }catch(workerError){
+   console.warn('Worker indisponível; usando modo compatível.',workerError);
+   status('Modo em segundo plano indisponível. Ativando modo compatível…');
+   const d=await getDetector();if(token!==generation)return;
+   await d.setOptions({runningMode:'VIDEO'});if(token!==generation)return;
+   detectorMode='main';
+   processInterval=Math.max(450,TARGET_INTERVAL);
+   modeLabel='compatível';
+  }
   starting=false;running=true;lastFrame=-1;lastRun=0;updateButtons();$('placeholder').hidden=true;
   stream.getVideoTracks()[0].addEventListener('ended',()=>{if(token===generation)stop('A câmera foi desconectada. Toque em iniciar para tentar novamente.');});
-  status('Modo fluido ativo: câmera até 30 FPS; IA em worker com análise reduzida.');scheduleFrame();
+  status('BUILD 5 ativo · câmera 30 FPS · detector em modo '+modeLabel+'.');scheduleFrame();
  }catch(e){if(token===generation)stop(errorText(e));}
 }
 function size(w,h){const scale=Math.min(1,DEVICE_MAX_WIDTH/w);input.width=canvas.width=Math.round(w*scale);input.height=canvas.height=Math.round(h*scale);}
@@ -215,13 +228,25 @@ function frame(){
  if(!running)return;
  const now=performance.now();
  try{
-  if(!processing && !workerBusy && now-lastRun>=processInterval && video.readyState>=2 && video.currentTime!==lastFrame){
-   processing=true;workerBusy=true;lastRun=now;lastFrame=video.currentTime;
+  if(!processing && now-lastRun>=processInterval && video.readyState>=2 && video.currentTime!==lastFrame){
+   processing=true;lastRun=now;lastFrame=video.currentTime;
    drawSource(video,video.videoWidth,video.videoHeight);
-   createImageBitmap(input).then(bitmap=>{
-    if(!running){bitmap.close();workerBusy=false;processing=false;return;}
-    handWorker.postMessage({type:'DETECT',bitmap,timestamp:now},[bitmap]);
-   }).catch(e=>{workerBusy=false;processing=false;console.error(e);});
+   if(detectorMode==='worker'){
+    if(workerBusy){processing=false;scheduleFrame();return;}
+    workerBusy=true;
+    createImageBitmap(input).then(bitmap=>{
+     if(!running){bitmap.close();workerBusy=false;processing=false;return;}
+     handWorker.postMessage({type:'DETECT',bitmap,timestamp:now},[bitmap]);
+    }).catch(e=>{workerBusy=false;processing=false;console.error(e);});
+   }else{
+    const t0=performance.now();
+    const detection=detector.detectForVideo(input,now);
+    lastDetectCost=performance.now()-t0;
+    processInterval=Math.min(MAX_INTERVAL,Math.max(450,lastDetectCost*1.8));
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    result(detection.landmarks,now);
+    processing=false;
+   }
   }
  }catch(e){processing=false;stop(errorText(e));return;}
  scheduleFrame();
