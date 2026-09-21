@@ -5,8 +5,7 @@
 </style></head><body><main>
 <header><div><h1>SignGlove<span style="color:var(--mint)">.</span></h1><small>Pratique com as mãos</small></div><span class="badge">MOBILE · PROTÓTIPO</span></header>
 <h2>Um gesto de cada vez.</h2><p class="intro">Reconhecimento experimental de A, B, C, D e F. Mostre uma mão e mantenha o gesto.</p>
-<div class="viewer"><canvas id="preview" width="360" height="270" aria-label="Imagem da câmera com pontos da mão"></canvas><div id="placeholder"><div class="hand" aria-hidden="true">✋</div><strong>Sua câmera, seus gestos</strong><span>Toque em iniciar para começar.</span></div><span class="camera-tag" id="camera">Frontal</span></div>
-<video id="video" playsinline muted autoplay aria-hidden="true" hidden></video>
+<div class="viewer"><video id="video" playsinline muted autoplay aria-hidden="true" hidden></video><canvas id="preview" width="360" height="270" aria-label="Imagem da câmera com pontos da mão"></canvas><div id="placeholder"><div class="hand" aria-hidden="true">✋</div><strong>Sua câmera, seus gestos</strong><span>Toque em iniciar para começar.</span></div><span class="camera-tag" id="camera">Frontal</span></div>
 <div class="result"><div id="letter" aria-label="Letra reconhecida">—</div><div class="result-detail"><strong>Gesto identificado</strong><small id="confidence">Mostre uma mão inteira</small><progress id="meter" max="1" value="0" aria-label="Confiança do modelo"></progress></div></div>
 <p id="status" role="status" aria-live="polite">A câmera só será ligada quando você tocar em iniciar.</p>
 <div class="row"><button id="start">Iniciar câmera</button><button id="switch" aria-label="Trocar entre câmera frontal e traseira">Trocar câmera</button></div>
