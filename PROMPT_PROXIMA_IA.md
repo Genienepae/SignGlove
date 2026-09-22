@@ -4,10 +4,22 @@ Estou desenvolvendo o TCC **SignGlove**, da ETEC de Registro (DS, 2º ano), para
 apresentar na FETEPS. O repositório é `https://github.com/Genienepae/SignGlove`.
 Trabalhe em `C:\Users\gabriel.silva\SignGlove` e fale em português simples.
 
+## Direção mais recente
+
+Leia primeiro `docs/VISAO_SIGNGLOVE_2027.md`. O estudante definiu como visão de
+longo prazo uma única luva discreta, câmera e aplicativo/site capazes de apoiar
+uma conversa em Libras, evoluindo futuramente para um formato semelhante a
+óculos inteligentes com pulseira. A meta de doze meses é um protótipo híbrido
+validado para a FETEPS; não prometa tradução completa de Libras nesse prazo.
+
 ## Situação atual
 
 - Branch: `main`.
-- Último commit publicado: `a665d81 Exibe alfabeto durante gravacao de gestos`.
+- Antes deste documento, o último commit publicado era
+  `fccc950 Add reliable detector fallback and build marker`.
+- Existe uma versão web em `index.html`, publicada pelo GitHub Pages. Os commits
+  recentes moveram a detecção de mãos para Web Worker e melhoraram o fallback e
+  o desempenho em celular.
 - O programa principal de treino é `libras_tcc/treinar_visual.py`.
 - Não abra a câmera ou a interface por conta própria: o usuário usa a câmera do
   celular pelo Windows e pode travar. Use somente verificações sem câmera,
